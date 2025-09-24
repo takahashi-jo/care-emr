@@ -1,0 +1,13 @@
+{
+  "name": "firebase-admin-setup",
+  "version": "1.0.0",
+  "description": "Firebase Admin SDK setup for EMR system",
+  "main": "index.js",
+  "scripts": {
+    "create-user": "node create-user.js",
+    "set-admin": "node set-admin-claim.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

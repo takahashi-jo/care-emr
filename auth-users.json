@@ -1,0 +1,40 @@
+{"users": [
+{
+  "localId": "CMBFyVKlv4YAENJ0JEvUP6J37SM2",
+  "email": "jo.takahashi.0120@gmail.com",
+  "emailVerified": true,
+  "displayName": "Jo",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIO7qW9DnrYdiRG62zNT76swvbMOtdEqXQmwS7nI8but8ENMyAE=s96-c",
+  "lastSignedInAt": "1758615584890",
+  "createdAt": "1758458594500",
+  "customAttributes": "{\"admin\":true}",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "118142225811053350753",
+      "email": "jo.takahashi.0120@gmail.com",
+      "displayName": "Jo",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIO7qW9DnrYdiRG62zNT76swvbMOtdEqXQmwS7nI8but8ENMyAE=s96-c"
+    }
+  ]
+},
+{
+  "localId": "RK0xBQIxLXetY9qpoljlbcR374k1",
+  "email": "ken.takahashi.sydney@gmail.com",
+  "emailVerified": true,
+  "displayName": "Ken Takahashi",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIrTM-zH8dkrcFSrIzHiuVVjmNlS7t9UL4voekFGNJ_KTibVQ=s96-c",
+  "lastSignedInAt": "1758605514309",
+  "createdAt": "1758459230227",
+  "disabled": false,
+  "customAttributes": "{\"admin\":true}",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "111744925507210609344",
+      "email": "ken.takahashi.sydney@gmail.com",
+      "displayName": "Ken Takahashi",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIrTM-zH8dkrcFSrIzHiuVVjmNlS7t9UL4voekFGNJ_KTibVQ=s96-c"
+    }
+  ]
+}]}

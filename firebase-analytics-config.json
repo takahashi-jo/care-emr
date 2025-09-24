@@ -1,0 +1,81 @@
+{
+  "dataRetention": {
+    "eventRetention": "14_MONTHS",
+    "userRetention": "14_MONTHS"
+  },
+  "enhancedEcommerce": {
+    "enabled": false
+  },
+  "customDefinitions": {
+    "customEvents": [
+      {
+        "eventName": "app_log",
+        "description": "Application logging events from unified logger"
+      },
+      {
+        "eventName": "user_login",
+        "description": "User authentication events"
+      },
+      {
+        "eventName": "resident_created",
+        "description": "New resident registration"
+      },
+      {
+        "eventName": "medical_record_created",
+        "description": "Medical record creation"
+      },
+      {
+        "eventName": "search_performed",
+        "description": "Resident search operations"
+      }
+    ],
+    "customParameters": [
+      {
+        "parameterName": "component",
+        "description": "React component name"
+      },
+      {
+        "parameterName": "log_level",
+        "description": "Logging level (info, warn, error, debug)"
+      },
+      {
+        "parameterName": "user_id",
+        "description": "Authenticated user ID"
+      },
+      {
+        "parameterName": "operation",
+        "description": "Operation type for performance tracking"
+      },
+      {
+        "parameterName": "duration",
+        "description": "Operation duration in milliseconds"
+      }
+    ]
+  },
+  "audienceDefinitions": [
+    {
+      "name": "Active Users",
+      "description": "Users who performed actions in last 7 days",
+      "criteria": "event_count > 0 AND days_since_last_activity <= 7"
+    },
+    {
+      "name": "Frequent Users",
+      "description": "Users with high engagement",
+      "criteria": "session_count >= 10 AND total_engagement_time >= 300"
+    }
+  ],
+  "conversionEvents": [
+    "user_login",
+    "resident_created",
+    "medical_record_created"
+  ],
+  "dataStreamSettings": {
+    "enhancedMeasurement": {
+      "scrolls": true,
+      "outboundClicks": true,
+      "siteSearch": true,
+      "videoEngagement": false,
+      "fileDownloads": false
+    }
+  }
+}

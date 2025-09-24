@@ -1,0 +1,17 @@
+/* Google Fonts は動的に読み込み - main.tsx で環境変数から設定 */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* スクロールバーによるレイアウトシフトを防ぐ */
+html {
+  overflow-y: scroll;
+}

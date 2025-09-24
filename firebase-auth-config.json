@@ -1,0 +1,46 @@
+{
+  "signInProviders": {
+    "google": {
+      "enabled": true,
+      "clientId": "AUTO_GENERATED",
+      "clientSecret": "AUTO_GENERATED"
+    },
+    "email": {
+      "enabled": false
+    },
+    "phone": {
+      "enabled": false
+    },
+    "anonymous": {
+      "enabled": false
+    }
+  },
+  "settings": {
+    "authorizedDomains": [
+      "localhost",
+      "emr-system-dc60d.web.app",
+      "emr-system-dc60d.firebaseapp.com"
+    ],
+    "enableEmailVerification": false,
+    "enableMultiFactorAuth": false,
+    "passwordPolicy": {
+      "minLength": 6,
+      "requireUppercase": false,
+      "requireLowercase": false,
+      "requireNumeric": false,
+      "requireSpecialCharacter": false
+    }
+  },
+  "customClaims": {
+    "admin": {
+      "description": "Administrator access for EMR system",
+      "required": true,
+      "validation": "Must be set to true for system access"
+    }
+  },
+  "notes": {
+    "authFlow": "popup",
+    "targetPlatform": "iPad compatible",
+    "securityModel": "Admin custom claims required for all operations"
+  }
+}

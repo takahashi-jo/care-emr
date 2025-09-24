@@ -1,0 +1,86 @@
+# Firebase App Hosting Configuration for CareEMR
+# Settings for Backend (on Cloud Run).
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Environment variables for production deployment
+# NOTE: Replace placeholder values with actual Firebase configuration values
+env:
+  # Firebase configuration
+  - variable: VITE_FIREBASE_API_KEY
+    value: YOUR_FIREBASE_API_KEY_HERE
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_AUTH_DOMAIN
+    value: your-project-id.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_PROJECT_ID
+    value: your-project-id
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_STORAGE_BUCKET
+    value: your-project-id.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_MESSAGING_SENDER_ID
+    value: "your-messaging-sender-id"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_APP_ID
+    value: your-firebase-app-id
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_FIREBASE_MEASUREMENT_ID
+    value: your-measurement-id
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Application configuration
+  - variable: VITE_APP_NAME
+    value: CareEMR
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_APP_VERSION
+    value: "1.0.0"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_APP_ENV
+    value: production
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: VITE_DEBUG_ENABLED
+    value: "false"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # External services
+  - variable: VITE_GOOGLE_FONTS_URL
+    value: https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap
+    availability:
+      - BUILD
+      - RUNTIME
