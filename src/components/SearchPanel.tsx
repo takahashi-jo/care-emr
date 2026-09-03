@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
+import { BeakerIcon } from '@heroicons/react/24/outline';
 import { residentService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
 import type { Resident } from '../types';
 import MedicalRecordsManager from './MedicalRecordsManager';
+import MedicationsManager from './MedicationsManager';
 import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'medication' | 'careLevel';
@@ -36,6 +38,7 @@ const SearchPanel = () => {
 
   const [lastSearchValue, setLastSearchValue] = useState('');
   const [medicalRecordsOpen, setMedicalRecordsOpen] = useState(false);
+  const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [currentResident, setCurrentResident] = useState<Resident | null>(null);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [viewingResident, setViewingResident] = useState<Resident | null>(null);
@@ -160,6 +163,11 @@ const SearchPanel = () => {
   const handleViewMedicalRecords = (resident: Resident) => {
     setCurrentResident(resident);
     setMedicalRecordsOpen(true);
+  };
+
+  const handleViewMedications = (resident: Resident) => {
+    setCurrentResident(resident);
+    setMedicationsOpen(true);
   };
 
   const handleEditResident = (resident: Resident) => {
@@ -472,6 +480,13 @@ const SearchPanel = () => {
                               </svg>
                             </button>
                             <button
+                              onClick={() => handleViewMedications(resident)}
+                              className="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors duration-150"
+                              title="投薬管理"
+                            >
+                              <BeakerIcon className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleEditResident(resident)}
                               className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors duration-150"
                               title="編集"
@@ -507,6 +522,17 @@ const SearchPanel = () => {
           open={medicalRecordsOpen}
           onClose={() => {
             setMedicalRecordsOpen(false);
+            setCurrentResident(null);
+          }}
+        />
+      )}
+
+      {currentResident && (
+        <MedicationsManager
+          resident={currentResident}
+          open={medicationsOpen}
+          onClose={() => {
+            setMedicationsOpen(false);
             setCurrentResident(null);
           }}
         />

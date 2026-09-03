@@ -45,6 +45,41 @@ const notes = [
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const pickN = (a, n) => [...a].sort(() => 0.5 - Math.random()).slice(0, n);
 
+const MED_PRESETS = [
+  { name: 'アムロジピン錠5mg', dosage: '1錠', frequency: '1日1回 朝食後', route: '経口', type: '定期' },
+  { name: 'アリセプト錠5mg', dosage: '1錠', frequency: '1日1回 朝食後', route: '経口', type: '定期' },
+  { name: 'マグミット錠330mg', dosage: '1錠', frequency: '1日3回 毎食後', route: '経口', type: '定期' },
+  { name: 'ランソプラゾールOD錠15mg', dosage: '1錠', frequency: '1日1回 朝食後', route: '経口', type: '定期' },
+  { name: 'メトホルミン錠250mg', dosage: '1錠', frequency: '1日2回 朝夕食後', route: '経口', type: '定期' },
+  { name: 'ロキソプロフェン錠60mg', dosage: '1錠', frequency: '疼痛時', route: '経口', type: '頓用', notes: '疼痛時、1日3回まで' },
+  { name: 'アセトアミノフェン錠200mg', dosage: '2錠', frequency: '発熱時', route: '経口', type: '頓用', notes: '38.5℃以上で使用' },
+  { name: 'モーラステープ', dosage: '1枚', frequency: '1日1回', route: '貼付', type: '定期' },
+  { name: 'ブロチゾラム錠0.25mg', dosage: '1錠', frequency: '不眠時', route: '経口', type: '頓用', notes: '就寝前に使用' },
+];
+
+function buildMedications(admissionDate) {
+  const chosen = pickN(MED_PRESETS, Math.floor(Math.random() * 4)); // 0〜3件
+  return chosen.map((m, idx) => {
+    const start = new Date(admissionDate);
+    start.setDate(start.getDate() + idx * 5);
+    // 定期薬の一部は「中止済み」にして処方の変遷を表現
+    const stopped = m.type === '定期' && Math.random() < 0.25;
+    const end = stopped ? new Date(start.getTime() + 60 * 24 * 3600 * 1000) : null;
+    return {
+      name: m.name,
+      dosage: m.dosage,
+      frequency: m.frequency,
+      route: m.route,
+      type: m.type,
+      startDate: Timestamp.fromDate(start),
+      endDate: end ? Timestamp.fromDate(end) : null,
+      notes: m.notes || '',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+  });
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -94,6 +129,7 @@ async function main() {
 
   const RESIDENT_COUNT = 15;
   let recordCount = 0;
+  let medCount = 0;
   for (let i = 0; i < RESIDENT_COUNT; i++) {
     const resident = buildResident();
     const ref = await db.collection('residents').add(resident);
@@ -108,8 +144,13 @@ async function main() {
       });
       recordCount++;
     }
+    // 構造化された投薬を residents/{id}/medications サブコレクションに投入
+    for (const med of buildMedications(resident.admissionDate.toDate())) {
+      await ref.collection('medications').add(med);
+      medCount++;
+    }
   }
-  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件を投入`);
+  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件を投入`);
   process.exit(0);
 }
 

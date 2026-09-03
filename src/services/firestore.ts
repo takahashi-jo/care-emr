@@ -15,11 +15,12 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, ResidentFormData, MedicalRecordFormData } from '../types';
+import type { Resident, MedicalRecord, Medication, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
-  MEDICAL_RECORDS: 'medicalRecords'
+  MEDICAL_RECORDS: 'medicalRecords',
+  MEDICATIONS: 'medications'
 } as const;
 
 const convertTimestampToDate = (timestamp: unknown): Date => {
@@ -59,6 +60,21 @@ const convertMedicalRecordData = (id: string, data: Record<string, unknown>): Me
   residentId: String(data.residentId || ''),
   date: convertTimestampToDate(data.date),
   record: String(data.record || ''),
+  createdAt: convertTimestampToDate(data.createdAt),
+  updatedAt: convertTimestampToDate(data.updatedAt)
+});
+
+const convertMedicationData = (residentId: string, id: string, data: Record<string, unknown>): Medication => ({
+  id,
+  residentId,
+  name: String(data.name || ''),
+  dosage: String(data.dosage || ''),
+  frequency: String(data.frequency || ''),
+  route: (data.route as Medication['route']) || '経口',
+  type: (data.type as Medication['type']) || '定期',
+  startDate: convertTimestampToDate(data.startDate),
+  endDate: data.endDate ? convertTimestampToDate(data.endDate) : undefined,
+  notes: String(data.notes || ''),
   createdAt: convertTimestampToDate(data.createdAt),
   updatedAt: convertTimestampToDate(data.updatedAt)
 });
@@ -388,5 +404,90 @@ export const medicalRecordService = {
 
   async delete(id: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, id));
+  }
+};
+
+// 投薬は入所者のサブコレクション residents/{residentId}/medications に保存
+export const medicationService = {
+  async getByResidentId(residentId: string): Promise<Medication[]> {
+    try {
+      const querySnapshot = await getDocs(
+        collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS)
+      );
+      const medications = querySnapshot.docs.map(d =>
+        convertMedicationData(residentId, d.id, d.data())
+      );
+      // 継続中（中止日なし）を上に、その中で開始日の新しい順
+      return medications.sort((a, b) => {
+        const aStopped = a.endDate ? 1 : 0;
+        const bStopped = b.endDate ? 1 : 0;
+        if (aStopped !== bStopped) return aStopped - bStopped;
+        return dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf();
+      });
+    } catch (error) {
+      logger.firestoreError('Failed to fetch medications', error as Error, {
+        action: 'get_medications',
+        residentId
+      });
+      return [];
+    }
+  },
+
+  async create(residentId: string, data: MedicationFormData): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(
+      collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS),
+      {
+        name: data.name,
+        dosage: data.dosage,
+        frequency: data.frequency,
+        route: data.route,
+        type: data.type,
+        startDate: Timestamp.fromDate(new Date(data.startDate)),
+        endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null,
+        notes: data.notes || '',
+        createdAt: now,
+        updatedAt: now
+      }
+    );
+    return docRef.id;
+  },
+
+  async update(residentId: string, medicationId: string, data: Partial<MedicationFormData>): Promise<void> {
+    const updateData: Record<string, FieldValue | string | Date | null> = {
+      updatedAt: Timestamp.now()
+    };
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.dosage !== undefined) updateData.dosage = data.dosage;
+    if (data.frequency !== undefined) updateData.frequency = data.frequency;
+    if (data.route !== undefined) updateData.route = data.route;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.startDate !== undefined) updateData.startDate = Timestamp.fromDate(new Date(data.startDate));
+    if (data.endDate !== undefined) {
+      updateData.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
+    }
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId),
+      updateData
+    );
+  },
+
+  // 中止（削除せず中止日を記録して変遷を残す）
+  async stop(residentId: string, medicationId: string, endDate: string): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId),
+      {
+        endDate: Timestamp.fromDate(new Date(endDate)),
+        updatedAt: Timestamp.now()
+      }
+    );
+  },
+
+  // 入力誤りの削除用
+  async delete(residentId: string, medicationId: string): Promise<void> {
+    await deleteDoc(doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId));
   }
 };
