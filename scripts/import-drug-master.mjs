@@ -1,39 +1,89 @@
 /**
  * 医薬品マスター インポートスクリプト
  *
- * 公式マスター（例: MEDIS 医薬品HOTコードマスター / レセプト電算処理システム 医薬品マスター）を
- * CSV に整形し、Firestore の drugMaster コレクションへ取り込む。
- * 取り込むと薬剤名オートコンプリートが全医薬品を網羅し、選択時に YJ/HOT コードを保持できる。
+ * 公式マスターを Firestore の drugMaster コレクションへ取り込み、薬剤名オートコンプリートを
+ * 全医薬品に拡張する。取り込むと選択時に YJ/HOT/レセ電コードを保持できる。
  *
- * 期待する CSV ヘッダ（下記いずれかの列名を自動認識）:
- *   name | 販売名 | 医薬品名
- *   kana | カナ
- *   yjCode | YJコード
- *   hotCode | HOTコード
+ * 取得元（無料・いずれも Shift-JIS・ヘッダ無しの固定列CSV）:
+ *   - 医薬品HOTコードマスター（MEDIS）  https://www2.medis.or.jp/hcode/index.html
+ *   - レセプト電算 医薬品マスター（支払基金）https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/
  *
- * 使い方:
- *   # Emulator へ取り込み（別ターミナルで `npm run emulators` を起動しておく）
- *   node scripts/import-drug-master.mjs ./drugs.csv --emulator
- *   # 本番へ取り込み（scripts/admin/serviceAccountKey.json が必要）
- *   node scripts/import-drug-master.mjs ./drugs.csv --prod ./scripts/admin/serviceAccountKey.json
+ * 使い方（列は実ファイルを見てからマッピングする）:
+ *   1) 列を確認:   node scripts/import-drug-master.mjs ./y.csv --inspect
+ *   2) 取り込み:   node scripts/import-drug-master.mjs ./y.csv --map name=3,kana=5,rezept=2,yj=31
+ *        （--map の番号は 0 始まりの列インデックス。name は必須、他は任意）
+ *
+ * オプション:
+ *   --emulator            (既定) ローカル Emulator へ取り込み
+ *   --prod <keyPath>      本番へ取り込み（serviceAccountKey.json のパス）
+ *   --sjis | --utf8       文字コード（既定 --sjis：公式マスターは Shift-JIS）
+ *   --inspect             先頭数行を列インデックス付きで表示して終了
+ *   --map k=idx,...       列マッピング（name/kana/yj/hot/rezept）
+ *   --limit N             先頭N行だけ取り込む（動作確認用）
  */
 import fs from 'node:fs';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
-const [, , csvPath, mode = '--emulator', keyPath] = process.argv;
+const args = process.argv.slice(2);
+const csvPath = args.find((a) => !a.startsWith('--') && !isKeyPath(a));
+const has = (f) => args.includes(f);
+const valOf = (f) => {
+  const i = args.indexOf(f);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+function isKeyPath(a) {
+  // --prod の直後の引数（鍵ファイル）は csv 扱いしない
+  const i = args.indexOf('--prod');
+  return i >= 0 && args[i + 1] === a;
+}
+
 if (!csvPath) {
-  console.error('使い方: node scripts/import-drug-master.mjs <csv> [--emulator | --prod <serviceAccountKey.json>]');
+  console.error('使い方: node scripts/import-drug-master.mjs <csv> [--inspect | --map name=..,kana=..,yj=..,rezept=..] [--prod <key>] [--utf8]');
   process.exit(1);
 }
 
-const PROJECT_ID = 'emr-system-dc60d';
+const encoding = has('--utf8') ? 'utf-8' : 'shift_jis';
+const raw = fs.readFileSync(csvPath);
+const text = new TextDecoder(encoding).decode(raw);
+const rows = text
+  .split(/\r?\n/)
+  .filter((l) => l.trim().length > 0)
+  .map((l) => l.split(',').map((c) => c.replace(/^"|"$/g, '').trim()));
 
-if (mode === '--prod') {
-  if (!keyPath) {
-    console.error('--prod には serviceAccountKey.json のパスが必要です');
-    process.exit(1);
-  }
+// --- 列プレビュー ---
+if (has('--inspect')) {
+  console.log(`エンコーディング: ${encoding} / 行数: ${rows.length} / 列数(先頭行): ${rows[0]?.length}`);
+  rows.slice(0, 3).forEach((r, ri) => {
+    console.log(`\n--- row ${ri} ---`);
+    r.forEach((c, ci) => console.log(`  [${ci}] ${c}`));
+  });
+  console.log('\n↑ 販売名/カナ/レセ電コード/YJコード が何番目([n])かを確認し、--map name=n,kana=n,rezept=n,yj=n を指定して再実行してください。');
+  process.exit(0);
+}
+
+// --- 列マッピング ---
+const mapStr = valOf('--map');
+if (!mapStr) {
+  console.error('列マッピングが必要です。まず --inspect で列を確認し、--map name=..,kana=..,rezept=..,yj=.. を指定してください。');
+  process.exit(1);
+}
+const COLS = {};
+for (const pair of mapStr.split(',')) {
+  const [k, v] = pair.split('=');
+  COLS[k.trim()] = Number(v);
+}
+if (COLS.name === undefined || Number.isNaN(COLS.name)) {
+  console.error('--map に少なくとも name=<列番号> が必要です。');
+  process.exit(1);
+}
+const limit = valOf('--limit') ? Number(valOf('--limit')) : Infinity;
+
+// --- Firestore 初期化 ---
+const PROJECT_ID = 'emr-system-dc60d';
+if (has('--prod')) {
+  const keyPath = valOf('--prod');
+  if (!keyPath) { console.error('--prod には serviceAccountKey.json のパスが必要です'); process.exit(1); }
   initializeApp({ credential: cert(JSON.parse(fs.readFileSync(keyPath, 'utf8'))), projectId: PROJECT_ID });
 } else {
   process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080';
@@ -41,39 +91,24 @@ if (mode === '--prod') {
 }
 const db = getFirestore();
 
-// 簡易 CSV パーサ（クオート無しの単純CSV向け。複雑なCSVは csv パーサ導入を検討）
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  const header = lines[0].split(',').map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cols = line.split(',');
-    const row = {};
-    header.forEach((h, i) => { row[h] = (cols[i] ?? '').trim(); });
-    return row;
-  });
-}
-
-const pickName = (r) => r.name || r['販売名'] || r['医薬品名'];
-const pickKana = (r) => r.kana || r['カナ'] || '';
-const pickYj = (r) => r.yjCode || r['YJコード'] || '';
-const pickHot = (r) => r.hotCode || r['HOTコード'] || '';
+const at = (row, key) => (COLS[key] !== undefined ? (row[COLS[key]] || '') : '');
 
 async function main() {
-  const rows = parseCsv(fs.readFileSync(csvPath, 'utf8'));
-  console.log(`CSV 読み込み: ${rows.length} 行 (${mode})`);
-
+  console.log(`取り込み開始: ${csvPath} / ${has('--prod') ? '本番' : 'Emulator'} / マッピング ${JSON.stringify(COLS)}`);
   let batch = db.batch();
   let inBatch = 0;
   let total = 0;
   for (const row of rows) {
-    const name = pickName(row);
+    if (total >= limit) break;
+    const name = at(row, 'name');
     if (!name) continue;
     const ref = db.collection('drugMaster').doc();
     batch.set(ref, {
       name,
-      kana: pickKana(row) || null,
-      yjCode: pickYj(row) || null,
-      hotCode: pickHot(row) || null,
+      kana: at(row, 'kana') || null,
+      yjCode: at(row, 'yj') || null,
+      hotCode: at(row, 'hot') || null,
+      rezeptCode: at(row, 'rezept') || null,
       createdAt: Timestamp.now(),
     });
     inBatch++;
