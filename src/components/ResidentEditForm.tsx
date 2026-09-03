@@ -6,7 +6,6 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
 import type { Resident, ResidentFormData } from '../types';
-import MedicationInput from './MedicationInput';
 
 interface ResidentEditFormProps {
   resident: Resident;
@@ -24,7 +23,6 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
     admissionDate: dayjs(resident.admissionDate).format('YYYY-MM-DD'),
     dischargeDate: resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY-MM-DD') : '',
     medicalHistory: resident.medicalHistory,
-    medications: resident.medications,
     careLevel: resident.careLevel
   });
 
@@ -259,11 +257,6 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
                   </select>
                 </div>
               </div>
-
-              <MedicationInput
-                medications={formData.medications}
-                onChange={(medications) => setFormData(prev => ({ ...prev, medications }))}
-              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

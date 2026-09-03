@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   doc,
   getDocs,
   getDoc,
@@ -50,7 +51,6 @@ const convertResidentData = (id: string, data: Record<string, unknown>): Residen
     admissionDate: convertTimestampToDate(data.admissionDate),
     dischargeDate: data.dischargeDate ? convertTimestampToDate(data.dischargeDate) : undefined,
     medicalHistory: String(data.medicalHistory || ''),
-    medications: Array.isArray(data.medications) ? data.medications.map(String) : [],
     careLevel: data.careLevel as 1 | 2 | 3 | 4 | 5,
     createdAt: convertTimestampToDate(data.createdAt),
     updatedAt: convertTimestampToDate(data.updatedAt)
@@ -154,7 +154,6 @@ export const residentService = {
         admissionDate: Timestamp.fromDate(new Date(data.admissionDate)),
         dischargeDate: data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null,
         medicalHistory: data.medicalHistory,
-        medications: data.medications,
         careLevel: data.careLevel,
         createdAt: now,
         updatedAt: now
@@ -201,9 +200,6 @@ export const residentService = {
       updateData.dischargeDate = data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null;
     }
     if (data.medicalHistory !== undefined) updateData.medicalHistory = data.medicalHistory;
-    if (data.medications !== undefined) {
-      updateData.medications = data.medications;
-    }
     if (data.careLevel !== undefined) updateData.careLevel = data.careLevel;
 
     await updateDoc(doc(db, COLLECTIONS.RESIDENTS, id), updateData);
@@ -328,19 +324,6 @@ export const residentService = {
     );
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => convertResidentData(doc.id, doc.data()));
-  },
-
-  async getByMedication(medication: string): Promise<Resident[]> {
-    const searchTerm = medication.trim();
-    if (!searchTerm) return [];
-
-    const q = query(
-      collection(db, COLLECTIONS.RESIDENTS),
-      where('medications', 'array-contains', searchTerm),
-      orderBy('name')
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => convertResidentData(doc.id, doc.data()));
   }
 };
 
@@ -441,6 +424,30 @@ export const medicationService = {
         action: 'get_medications',
         residentId
       });
+      return [];
+    }
+  },
+
+  // 服薬中の薬剤で入所者を検索（全入所者の medications サブコレクションを横断）
+  async searchResidentsByDrug(drugName: string): Promise<Resident[]> {
+    const term = drugName.trim();
+    if (!term) return [];
+    try {
+      const snap = await getDocs(query(
+        collectionGroup(db, COLLECTIONS.MEDICATIONS),
+        where('name', '>=', term),
+        where('name', '<=', term + String.fromCharCode(0xf8ff)),
+        orderBy('name')
+      ));
+      const residentIds = [...new Set(
+        snap.docs.map(d => d.ref.parent.parent?.id).filter((id): id is string => !!id)
+      )];
+      const residents = await Promise.all(residentIds.map(id => residentService.getById(id)));
+      return residents
+        .filter((r): r is Resident => r !== null)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      logger.firestoreError('Search residents by drug failed', error as Error, { action: 'search_by_drug' });
       return [];
     }
   },

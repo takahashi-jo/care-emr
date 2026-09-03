@@ -6,7 +6,6 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
 import type { ResidentFormData } from '../types';
-import MedicationInput from './MedicationInput';
 
 const ResidentForm = () => {
   const [formData, setFormData] = useState<ResidentFormData>({
@@ -18,7 +17,6 @@ const ResidentForm = () => {
     admissionDate: '',
     dischargeDate: '',
     medicalHistory: '',
-    medications: [],
     careLevel: 1
   });
 
@@ -339,14 +337,6 @@ const ResidentForm = () => {
                 rows={3}
                 placeholder="既往歴、アレルギー、注意事項など"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-vertical"
-              />
-            </div>
-
-            {/* Medications */}
-            <div className="mb-8">
-              <MedicationInput
-                medications={formData.medications}
-                onChange={(medications) => setFormData(prev => ({ ...prev, medications }))}
               />
             </div>
 

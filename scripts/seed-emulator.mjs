@@ -32,7 +32,6 @@ const surnames = ['田中', '佐藤', '鈴木', '高橋', '渡辺', '山本', '�
 const surnameKana = ['タナカ', 'サトウ', 'スズキ', 'タカハシ', 'ワタナベ', 'ヤマモト', 'ナカムラ', 'コバヤシ', 'カトウ', 'ヨシダ'];
 const maleNames = [['太郎', 'タロウ'], ['一郎', 'イチロウ'], ['健一', 'ケンイチ'], ['明', 'アキラ'], ['博', 'ヒロシ']];
 const femaleNames = [['花子', 'ハナコ'], ['よしこ', 'ヨシコ'], ['かずこ', 'カズコ'], ['みどり', 'ミドリ'], ['のりこ', 'ノリコ']];
-const medications = ['アリセプト', 'メマリー', 'アムロジピン', 'メトホルミン', 'ワーファリン', 'フロセミド', 'ランソプラゾール'];
 const histories = ['高血圧症', '糖尿病', '認知症', '心房細動', '脳梗塞', '骨粗鬆症', '慢性心不全'];
 const notes = [
   '歩行時見守り必要。転倒リスクあり。',
@@ -125,7 +124,6 @@ function buildResident() {
     admissionDate: Timestamp.fromDate(admission),
     dischargeDate: null,
     medicalHistory: pickN(histories, 1 + Math.floor(Math.random() * 3)).join('、'),
-    medications: pickN(medications, Math.floor(Math.random() * 4)),
     careLevel: 1 + Math.floor(Math.random() * 5),
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),

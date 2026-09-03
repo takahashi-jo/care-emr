@@ -12,7 +12,6 @@ export interface Resident {
   admissionDate: Date;
   dischargeDate?: Date;
   medicalHistory: string;
-  medications: string[];
   careLevel?: 1 | 2 | 3 | 4 | 5;
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +35,6 @@ export interface ResidentFormData {
   admissionDate: string;
   dischargeDate?: string;
   medicalHistory: string;
-  medications: string[];
   careLevel?: 1 | 2 | 3 | 4 | 5;
 }
 

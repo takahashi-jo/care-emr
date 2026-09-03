@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { BeakerIcon } from '@heroicons/react/24/outline';
-import { residentService } from '../services/firestore';
+import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
@@ -114,7 +114,7 @@ const SearchPanel = () => {
           break;
         case 'medication':
           results = await measureAsyncOperation(
-            () => residentService.getByMedication(medicationSearch),
+            () => medicationService.searchResidentsByDrug(medicationSearch),
             'search_by_medication'
           ) || [];
           break;
@@ -416,7 +416,6 @@ const SearchPanel = () => {
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">年齢</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">部屋</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[80px]">要介護度</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[200px]">服薬</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[120px]">操作</th>
                     </tr>
                   </thead>
@@ -441,22 +440,6 @@ const SearchPanel = () => {
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             要介護{resident.careLevel}
                           </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex flex-wrap gap-1 max-w-xs">
-                            {resident.medications.length > 0 ? (
-                              resident.medications.map((medication, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
-                                >
-                                  {medication}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-sm text-gray-500 italic">処方薬なし</span>
-                            )}
-                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-1 justify-center flex-wrap">
@@ -588,23 +571,6 @@ const SearchPanel = () => {
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
                     要介護{viewingResident.careLevel}
                   </span>
-                </div>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-500 mb-2">服薬情報</label>
-                <div className="flex flex-wrap gap-2">
-                  {viewingResident.medications.length > 0 ? (
-                    viewingResident.medications.map((medication, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full"
-                      >
-                        {medication}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 italic">処方薬なし</p>
-                  )}
                 </div>
               </div>
               {viewingResident.medicalHistory && (
