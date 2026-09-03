@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { BeakerIcon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { medicationService } from '../services/firestore';
 import ConfirmDialog from './common/ConfirmDialog';
+import ModalHeader from './common/ModalHeader';
 import DrugNameAutocomplete from './DrugNameAutocomplete';
 import type { Resident, Medication, MedicationFormData, MedicationRoute, MedicationType } from '../types';
 
@@ -165,21 +166,12 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6 relative">
-            <div className="flex items-center gap-3">
-              <BeakerIcon className="w-8 h-8" />
-              <div>
-                <h2 className="text-2xl font-bold">{resident.name}さんの投薬</h2>
-                <p className="text-teal-100 mt-1 text-sm">
-                  継続中 {activeCount} 件 / 全 {medications.length} 件
-                </p>
-              </div>
-            </div>
-            <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-gray-200" aria-label="閉じる">
-              <XMarkIcon className="w-6 h-6" />
-            </button>
-          </div>
+          <ModalHeader
+            title={`${resident.name}さんの投薬`}
+            subtitle={`継続中 ${activeCount} 件 / 全 ${medications.length} 件`}
+            icon={BeakerIcon}
+            onClose={onClose}
+          />
 
           {/* Content */}
           <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">

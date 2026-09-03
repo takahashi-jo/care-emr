@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
-import { BeakerIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, UserIcon } from '@heroicons/react/24/outline';
+import ModalHeader from './common/ModalHeader';
 import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
@@ -537,9 +538,12 @@ const SearchPanel = () => {
       {viewingResident && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">入所者詳細情報</h3>
-            </div>
+            <ModalHeader
+              title={`${viewingResident.name}さんの詳細`}
+              subtitle={`${viewingResident.gender} • ${calculateAge(viewingResident.birthDate)}歳 • 部屋${viewingResident.roomNumber}`}
+              icon={UserIcon}
+              onClose={() => setViewingResident(null)}
+            />
             <div className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { PencilIcon, ClockIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, ClockIcon, XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import ModalHeader from './common/ModalHeader';
 import { medicalRecordService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, MedicalRecord, MedicalRecordFormData, MedicalRecordRevision } from '../types';
@@ -174,32 +175,12 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 relative">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    {resident.name}さんの診療録
-                  </h2>
-                  <p className="text-blue-100 mt-1">
-                    {resident.gender} • {calculateAge(resident.birthDate)}歳 • 部屋{resident.roomNumber}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            <ModalHeader
+              title={`${resident.name}さんの診療録`}
+              subtitle={`${resident.gender} • ${calculateAge(resident.birthDate)}歳 • 部屋${resident.roomNumber}`}
+              icon={DocumentTextIcon}
+              onClose={onClose}
+            />
 
             {/* Content */}
             <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { PencilIcon } from '@heroicons/react/24/outline';
+import ModalHeader from './common/ModalHeader';
 import { residentService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
@@ -127,13 +128,11 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
       {/* Main Dialog */}
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-          {/* Dialog Header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <PencilIcon className="w-5 h-5" />
-              {resident.name}さんの情報編集
-            </h2>
-          </div>
+          <ModalHeader
+            title={`${resident.name}さんの情報編集`}
+            icon={PencilIcon}
+            onClose={onCancel}
+          />
 
           {/* Dialog Content */}
           <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
