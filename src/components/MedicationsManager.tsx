@@ -267,7 +267,10 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">{editing ? '投薬の編集' : '投薬の追加'}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <PencilIcon className="w-5 h-5" />
+                {editing ? '投薬の編集' : '投薬の追加'}
+              </h3>
             </div>
 
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
