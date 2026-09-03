@@ -24,6 +24,14 @@ dist-ssr
 serviceAccountKey.json
 **/serviceAccountKey.json
 
+# Firebase Emulator の生成物・エクスポート
+.firebase/
+.emulator-data/
+firebase-export-*
+firestore-debug.log
+ui-debug.log
+auth-debug.log
+
 
 # Editor directories and files
 .vscode/*
