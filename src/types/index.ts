@@ -59,6 +59,8 @@ export interface Medication {
   startDate: Date;        // 開始日
   endDate?: Date;         // 中止日（未設定なら継続中）
   notes?: string;         // 備考（頓用条件など）
+  yjCode?: string;        // 個別医薬品(YJ)コード（薬剤マスター由来）
+  hotCode?: string;       // 医薬品HOTコード
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,4 +74,15 @@ export interface MedicationFormData {
   startDate: string;      // 'YYYY-MM-DD'
   endDate?: string;
   notes?: string;
+  yjCode?: string;
+  hotCode?: string;
+}
+
+// 医薬品マスター1件（drugMaster コレクション）
+export interface DrugMasterItem {
+  id: string;
+  name: string;   // 販売名（例：アムロジピン錠5mg）
+  kana?: string;
+  yjCode?: string;
+  hotCode?: string;
 }

@@ -9,18 +9,20 @@ import {
   query,
   where,
   orderBy,
+  limit,
   Timestamp,
   type FieldValue
 } from 'firebase/firestore';
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, Medication, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
+import type { Resident, MedicalRecord, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
   MEDICAL_RECORDS: 'medicalRecords',
-  MEDICATIONS: 'medications'
+  MEDICATIONS: 'medications',
+  DRUG_MASTER: 'drugMaster'
 } as const;
 
 const convertTimestampToDate = (timestamp: unknown): Date => {
@@ -75,8 +77,18 @@ const convertMedicationData = (residentId: string, id: string, data: Record<stri
   startDate: convertTimestampToDate(data.startDate),
   endDate: data.endDate ? convertTimestampToDate(data.endDate) : undefined,
   notes: String(data.notes || ''),
+  yjCode: data.yjCode ? String(data.yjCode) : undefined,
+  hotCode: data.hotCode ? String(data.hotCode) : undefined,
   createdAt: convertTimestampToDate(data.createdAt),
   updatedAt: convertTimestampToDate(data.updatedAt)
+});
+
+const convertDrugMasterData = (id: string, data: Record<string, unknown>): DrugMasterItem => ({
+  id,
+  name: String(data.name || ''),
+  kana: data.kana ? String(data.kana) : undefined,
+  yjCode: data.yjCode ? String(data.yjCode) : undefined,
+  hotCode: data.hotCode ? String(data.hotCode) : undefined,
 });
 
 export const residentService = {
@@ -446,6 +458,8 @@ export const medicationService = {
         startDate: Timestamp.fromDate(new Date(data.startDate)),
         endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null,
         notes: data.notes || '',
+        yjCode: data.yjCode || null,
+        hotCode: data.hotCode || null,
         createdAt: now,
         updatedAt: now
       }
@@ -468,6 +482,8 @@ export const medicationService = {
       updateData.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
     }
     if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.yjCode !== undefined) updateData.yjCode = data.yjCode || null;
+    if (data.hotCode !== undefined) updateData.hotCode = data.hotCode || null;
 
     await updateDoc(
       doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId),
@@ -489,5 +505,27 @@ export const medicationService = {
   // 入力誤りの削除用
   async delete(residentId: string, medicationId: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId));
+  }
+};
+
+// 医薬品マスター（drugMaster コレクション）— 薬剤名のプレフィックス検索
+export const drugMasterService = {
+  async search(prefix: string, max = 10): Promise<DrugMasterItem[]> {
+    const term = prefix.trim();
+    if (!term) return [];
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.DRUG_MASTER),
+        where('name', '>=', term),
+        where('name', '<=', term + String.fromCharCode(0xf8ff)),
+        orderBy('name'),
+        limit(max)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => convertDrugMasterData(d.id, d.data()));
+    } catch (error) {
+      logger.firestoreError('Drug master search failed', error as Error, { action: 'drug_search' });
+      return [];
+    }
   }
 };

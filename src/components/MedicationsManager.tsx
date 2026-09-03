@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { BeakerIcon } from '@heroicons/react/24/outline';
 import { medicationService } from '../services/firestore';
 import ConfirmDialog from './common/ConfirmDialog';
-import { DRUG_SUGGESTIONS } from '../data/drugSuggestions';
+import DrugNameAutocomplete from './DrugNameAutocomplete';
 import type { Resident, Medication, MedicationFormData, MedicationRoute, MedicationType } from '../types';
 
 interface MedicationsManagerProps {
@@ -112,6 +112,8 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
       startDate: dayjs(medication.startDate).format('YYYY-MM-DD'),
       endDate: medication.endDate ? dayjs(medication.endDate).format('YYYY-MM-DD') : '',
       notes: medication.notes || '',
+      yjCode: medication.yjCode,
+      hotCode: medication.hotCode,
     });
     setFormOpen(true);
   };
@@ -287,17 +289,14 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">薬剤名 <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  list="drug-suggestions"
+                <DrugNameAutocomplete
                   value={form.name}
-                  onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="例：アムロジピン錠5mg（入力すると候補が出ます）"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  onChange={(name, item) => setForm(prev => ({ ...prev, name, yjCode: item?.yjCode, hotCode: item?.hotCode }))}
+                  placeholder="例：アムロジピン（入力すると候補が出ます）"
                 />
-                <datalist id="drug-suggestions">
-                  {DRUG_SUGGESTIONS.map(d => <option key={d} value={d} />)}
-                </datalist>
+                {form.yjCode && (
+                  <p className="text-xs text-gray-400 mt-1">YJコード: {form.yjCode}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
