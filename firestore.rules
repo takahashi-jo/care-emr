@@ -18,8 +18,8 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isAdmin();
       allow update: if isAdmin()
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.createdBy == resource.data.createdBy;
+        && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null)
+        && request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null);
       allow delete: if false; // 物理削除禁止（論理削除のみ）
 
       // 訂正履歴：追記のみ・変更/削除禁止
