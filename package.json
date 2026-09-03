@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "create-test-data": "node scripts/createTestData.js",
-    "emulators": "firebase emulators:start --only auth,firestore --project emr-system-dc60d",
+    "emulators": "firebase emulators:start --only auth,firestore --project emr-system-dc60d --import=./.emulator-data --export-on-exit=./.emulator-data",
     "seed:emulator": "node scripts/seed-emulator.mjs",
     "admin:create-user": "cd scripts/admin && node create-user.js",
     "admin:set-admin": "cd scripts/admin && node set-admin-claim.js"

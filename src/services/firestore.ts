@@ -17,13 +17,14 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
   MEDICAL_RECORDS: 'medicalRecords',
   MEDICATIONS: 'medications',
-  DRUG_MASTER: 'drugMaster'
+  DRUG_MASTER: 'drugMaster',
+  REVISIONS: 'revisions'
 } as const;
 
 const convertTimestampToDate = (timestamp: unknown): Date => {
@@ -62,8 +63,20 @@ const convertMedicalRecordData = (id: string, data: Record<string, unknown>): Me
   residentId: String(data.residentId || ''),
   date: convertTimestampToDate(data.date),
   record: String(data.record || ''),
+  createdBy: (data.createdBy as RecordAuthor) || undefined,
+  updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+  deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+  deletedBy: (data.deletedBy as RecordAuthor) || undefined,
   createdAt: convertTimestampToDate(data.createdAt),
   updatedAt: convertTimestampToDate(data.updatedAt)
+});
+
+const convertRevisionData = (id: string, data: Record<string, unknown>): MedicalRecordRevision => ({
+  id,
+  date: convertTimestampToDate(data.date),
+  record: String(data.record || ''),
+  editedBy: (data.editedBy as RecordAuthor) || undefined,
+  editedAt: convertTimestampToDate(data.editedAt),
 });
 
 const convertMedicationData = (residentId: string, id: string, data: Record<string, unknown>): Medication => ({
@@ -335,9 +348,9 @@ export const medicalRecordService = {
         where('residentId', '==', residentId)
       );
       const querySnapshot = await getDocs(q);
-      const records = querySnapshot.docs.map(doc => {
-        return convertMedicalRecordData(doc.id, doc.data());
-      });
+      const records = querySnapshot.docs
+        .map(doc => convertMedicalRecordData(doc.id, doc.data()))
+        .filter(r => !r.deletedAt); // 論理削除は除外
       return records.sort((a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf());
     } catch {
       return [];
@@ -355,6 +368,7 @@ export const medicalRecordService = {
 
       for (const doc of querySnapshot.docs) {
         const recordData = doc.data();
+        if (recordData.deletedAt) continue; // 論理削除は無視
         const recordDate = dayjs(recordData.date.toDate()).format('YYYY-MM-DD');
         if (recordDate === targetDate) {
           return convertMedicalRecordData(doc.id, recordData);
@@ -366,7 +380,7 @@ export const medicalRecordService = {
     }
   },
 
-  async create(residentId: string, data: MedicalRecordFormData): Promise<string> {
+  async create(residentId: string, data: MedicalRecordFormData, author: RecordAuthor): Promise<string> {
 
     // 同一日付のレコードが既に存在するかチェック
     const existingRecord = await this.checkExistingRecord(residentId, data.date);
@@ -379,6 +393,9 @@ export const medicalRecordService = {
       residentId,
       date: Timestamp.fromDate(new Date(data.date)),
       record: data.record,
+      createdBy: author,
+      updatedBy: author,
+      deletedAt: null,
       createdAt: now,
       updatedAt: now
     };
@@ -386,19 +403,50 @@ export const medicalRecordService = {
     return docRef.id;
   },
 
-  async update(id: string, data: Partial<MedicalRecordFormData>): Promise<void> {
-    const updateData: Record<string, FieldValue | string | Date> = {
-      updatedAt: Timestamp.now()
-    };
+  async update(id: string, data: Partial<MedicalRecordFormData>, author: RecordAuthor): Promise<void> {
+    const ref = doc(db, COLLECTIONS.MEDICAL_RECORDS, id);
 
+    // 編集前の内容を訂正履歴として追記（改ざん防止・真正性）
+    const currentSnap = await getDoc(ref);
+    if (currentSnap.exists()) {
+      const current = currentSnap.data();
+      await addDoc(collection(db, COLLECTIONS.MEDICAL_RECORDS, id, COLLECTIONS.REVISIONS), {
+        date: current.date,
+        record: current.record ?? '',
+        editedBy: current.updatedBy ?? current.createdBy ?? null,
+        editedAt: current.updatedAt ?? Timestamp.now()
+      });
+    }
+
+    const updateData: Record<string, FieldValue | string | Date | RecordAuthor> = {
+      updatedAt: Timestamp.now(),
+      updatedBy: author
+    };
     if (data.date !== undefined) updateData.date = Timestamp.fromDate(new Date(data.date));
     if (data.record !== undefined) updateData.record = data.record;
 
-    await updateDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, id), updateData);
+    await updateDoc(ref, updateData);
   },
 
-  async delete(id: string): Promise<void> {
-    await deleteDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, id));
+  // 論理削除（物理削除しない。5年保存・真正性のため）
+  async delete(id: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(doc(db, COLLECTIONS.MEDICAL_RECORDS, id), {
+      deletedAt: Timestamp.now(),
+      deletedBy: author,
+      updatedAt: Timestamp.now(),
+      updatedBy: author
+    });
+  },
+
+  async getRevisions(id: string): Promise<MedicalRecordRevision[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.MEDICAL_RECORDS, id, COLLECTIONS.REVISIONS));
+      return snap.docs
+        .map(d => convertRevisionData(d.id, d.data()))
+        .sort((a, b) => dayjs(b.editedAt).valueOf() - dayjs(a.editedAt).valueOf());
+    } catch {
+      return [];
+    }
   }
 };
 

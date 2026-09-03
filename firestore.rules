@@ -1,10 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // adminカスタムクレームを持つユーザーのみアクセス可能
-    match /{document=**} {
-      allow read, write: if request.auth != null
-        && request.auth.token.admin == true;
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // 入所者とそのサブコレクション（投薬など）
+    match /residents/{residentId} {
+      allow read, write: if isAdmin();
+      match /{sub=**} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // 診療録：真正性のため、物理削除禁止・作成メタデータ不変（追記型）
+    match /medicalRecords/{recordId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if false; // 物理削除禁止（論理削除のみ）
+
+      // 訂正履歴：追記のみ・変更/削除禁止
+      match /revisions/{revId} {
+        allow read, create: if isAdmin();
+        allow update, delete: if false;
+      }
+    }
+
+    // 医薬品マスター
+    match /drugMaster/{docId} {
+      allow read, write: if isAdmin();
     }
   }
 }

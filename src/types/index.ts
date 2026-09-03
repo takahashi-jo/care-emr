@@ -17,13 +17,31 @@ export interface Resident {
   updatedAt: Date;
 }
 
+export interface RecordAuthor {
+  uid: string;
+  name: string;   // displayName または email
+}
+
 export interface MedicalRecord {
   id: string;
   residentId: string;
   date: Date;
   record: string;
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// 診療録の訂正履歴（編集前スナップショット。追記のみ・不変）
+export interface MedicalRecordRevision {
+  id: string;
+  date: Date;
+  record: string;
+  editedBy?: RecordAuthor;
+  editedAt: Date;
 }
 
 export interface ResidentFormData {
