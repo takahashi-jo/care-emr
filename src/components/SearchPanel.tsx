@@ -483,7 +483,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">氏名</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">フリガナ</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">性別</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">年齢</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">部屋</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">要介護度</th>
@@ -500,11 +500,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               className={`inline-block w-2 h-2 rounded-full shrink-0 ${resident.dischargeDate ? 'bg-gray-400' : 'bg-green-500'}`}
                               title={resident.dischargeDate ? `退所済み（退所日: ${dayjs(resident.dischargeDate).format('YYYY年MM月DD日')}）` : '入所中'}
                             />
-                            <span className="font-medium text-gray-900">{resident.name}</span>
+                            <div className="leading-tight">
+                              <div className="text-xs text-gray-500">{resident.furigana}</div>
+                              <div className="font-medium text-gray-900">{resident.name}</div>
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="text-gray-600">{resident.furigana}</span>
+                          <span className="text-gray-700">{resident.gender}</span>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <span className="text-gray-700">{calculateAge(resident.birthDate)}歳</span>
