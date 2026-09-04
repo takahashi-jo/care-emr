@@ -5,6 +5,7 @@ import ModalHeader from './common/ModalHeader';
 import { vitalSignService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, VitalSign, VitalSignFormData } from '../types';
+import { isVitalAbnormal } from '../constants/vitalReference';
 
 interface VitalsManagerProps {
   resident: Resident;
@@ -25,15 +26,6 @@ const emptyForm = (): VitalSignFormData => ({
   bloodGlucose: '',
   notes: '',
 });
-
-// 異常値の簡易判定（回診で一目で気づけるように。あくまで目安）
-const abnormal = {
-  temperature: (v: number) => v >= 37.5,
-  spo2: (v: number) => v < 93,
-  pulse: (v: number) => v < 50 || v > 100,
-  systolicBP: (v: number) => v >= 140 || v < 90,
-  diastolicBP: (v: number) => v >= 90,
-};
 
 // 数値入力欄（単位付きラベル）
 const NumField = ({ label, value, onChange, step, placeholder }: {
@@ -232,14 +224,14 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                               <div className="text-sm font-medium text-blue-600">{dayjs(v.measuredAt).format('YYYY/MM/DD')}</div>
                               <div className="text-xs text-gray-500">{dayjs(v.measuredAt).format('HH:mm')}</div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.temperature, '℃', abnormal.temperature)}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.temperature, '℃', isVitalAbnormal.temperature)}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                               {v.systolicBP === undefined && v.diastolicBP === undefined ? (
                                 <span className="text-gray-400">—</span>
                               ) : (
                                 <span className={
-                                  (v.systolicBP !== undefined && abnormal.systolicBP(v.systolicBP)) ||
-                                  (v.diastolicBP !== undefined && abnormal.diastolicBP(v.diastolicBP))
+                                  (v.systolicBP !== undefined && isVitalAbnormal.systolicBP(v.systolicBP)) ||
+                                  (v.diastolicBP !== undefined && isVitalAbnormal.diastolicBP(v.diastolicBP))
                                     ? 'text-red-600 font-semibold'
                                     : 'text-gray-900'
                                 }>
@@ -247,8 +239,8 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.pulse, '', abnormal.pulse)}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.spo2, '%', abnormal.spo2)}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.pulse, '', isVitalAbnormal.pulse)}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.spo2, '%', isVitalAbnormal.spo2)}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.weight, 'kg')}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.bloodGlucose, '')}</td>
                             <td className="px-4 py-3">
@@ -256,8 +248,8 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                                 {v.notes ? v.notes : <span className="text-gray-400">—</span>}
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
-                                記録: {v.createdBy?.name ?? '—'}
-                                {v.updatedBy && v.updatedBy.name !== v.createdBy?.name && ` / 更新: ${v.updatedBy.name}`}
+                                作成: {v.createdBy?.name ?? '—'}（{dayjs(v.createdAt).format('YYYY/MM/DD HH:mm')}）
+                                {v.updatedBy && <> ／ 更新: {v.updatedBy.name}（{dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm')}）</>}
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -283,6 +275,10 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                       </tbody>
                     </table>
                   </div>
+
+                  <p className="text-xs text-gray-400">
+                    ※ 数値の赤字は一般的な参考基準に基づく「要注意」の目安です（診断ではありません）。
+                  </p>
 
                   {totalPages > 1 && (
                     <div className="flex justify-center">

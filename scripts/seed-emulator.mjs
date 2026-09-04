@@ -43,7 +43,7 @@ const notes = [
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const pickN = (a, n) => [...a].sort(() => 0.5 - Math.random()).slice(0, n);
-const SEED_AUTHOR = { uid: 'seed', name: '初期データ' };
+const SEED_AUTHOR = { uid: 'seed', name: 'dev@example.com' };
 function buildAllergy() {
   const r = Math.random();
   if (r < 0.25) return { allergyStatus: 'あり', allergies: pick(['ペニシリン', 'そば', '卵', 'ヨード']) };

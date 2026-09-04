@@ -241,9 +241,9 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                                 {record.record}
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
-                                作成: {record.createdBy?.name ?? '—'}
+                                作成: {record.createdBy?.name ?? '—'}（{dayjs(record.createdAt).format('YYYY/MM/DD HH:mm')}）
                                 {record.updatedBy && (
-                                  <> / 更新: {record.updatedBy.name}（{dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm')}）</>
+                                  <> ／ 更新: {record.updatedBy.name}（{dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm')}）</>
                                 )}
                               </div>
                             </td>
