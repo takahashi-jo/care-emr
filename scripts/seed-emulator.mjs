@@ -7,9 +7,11 @@
  *   npm run seed:emulator                 # 既定の管理者 dev@example.com を作成
  *   npm run seed:emulator you@example.com # 任意のメールで管理者を作成
  *
- * 実施内容:
+ * 実施内容（冪等。実行のたびに同じ状態へ揃える）:
  *   1. 管理者ユーザー（admin カスタムクレーム付き）を作成
- *   2. サンプル入所者・診療録を Firestore Emulator に投入
+ *   2. 既存のサンプルデータ（入所者・診療録とそのサブコレクション）を全削除
+ *   3. サンプル入所者と各記録（診療録・投薬・バイタル・プロブレム・検査・予防接種）を投入
+ *   4. 医薬品／病名マスターは空のときのみ投入（フル取り込み済みなら保持）
  */
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -229,6 +231,39 @@ function buildLabResults() {
   return out;
 }
 
+// 予防接種のサンプル。予防接種台帳の記録事項（種類・接種日・製造番号・製造販売業者・接種者）に沿う。
+const VACCINE_SEED = [
+  { vaccine: 'インフルエンザ', makers: ['第一三共', 'デンカ', '阪大微生物病研究会'], dose: '1回目', monthsAgo: 2 },
+  { vaccine: '新型コロナ', makers: ['ファイザー', 'モデルナ'], dose: '追加接種', monthsAgo: 8 },
+  { vaccine: '肺炎球菌（PPSV23）', makers: ['MSD'], dose: '1回目', monthsAgo: 18 },
+];
+
+function buildImmunizations() {
+  const lot = () => 'ABCDEFGHJKLMN'[Math.floor(Math.random() * 13)] + (1000 + Math.floor(Math.random() * 9000));
+  // インフルは全員、他は一部の入所者に付与
+  const chosen = VACCINE_SEED.filter((v, i) => i === 0 || Math.random() < 0.6);
+  return chosen.map((v) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - v.monthsAgo - Math.floor(Math.random() * 2));
+    d.setHours(10, 0, 0, 0);
+    return {
+      vaccine: v.vaccine,
+      vaccinatedAt: Timestamp.fromDate(d),
+      doseNumber: v.dose,
+      manufacturer: pick(v.makers),
+      lot: lot(),
+      physician: '山田 一郎',
+      facility: '施設内',
+      notes: '',
+      createdBy: SEED_AUTHOR,
+      updatedBy: SEED_AUTHOR,
+      deletedAt: null,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+  });
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -274,22 +309,40 @@ async function ensureAdminUser(email) {
   return user;
 }
 
+// Emulator のサンプルデータを全削除（冪等。residents はサブコレクションごと再帰削除）。
+async function clearSampleData() {
+  await db.recursiveDelete(db.collection('residents'));   // medications/vitals/problems/labResults/immunizations も削除
+  await db.recursiveDelete(db.collection('medicalRecords')); // revisions も削除
+}
+
 async function main() {
   const user = await ensureAdminUser(ADMIN_EMAIL);
-  console.log(`✅ 管理者ユーザーを用意: ${ADMIN_EMAIL} (uid=${user.uid}) に admin クレーム付与`);
+  console.log(`管理者ユーザーを用意: ${ADMIN_EMAIL} (uid=${user.uid}) に admin クレーム付与`);
   console.log(`   ログイン用パスワード（Emulator内）: ${ADMIN_PASSWORD}`);
 
-  // 医薬品マスターをシード（薬剤名オートコンプリート用）
-  for (const name of DRUG_MASTER_NAMES) {
-    await db.collection('drugMaster').add({ name, createdAt: Timestamp.now() });
-  }
-  console.log(`✅ 医薬品マスター ${DRUG_MASTER_NAMES.length} 件を投入`);
+  // 既存のサンプルデータを全削除してから投入（毎回同じ状態に揃える）
+  await clearSampleData();
+  console.log('既存のサンプルデータ（入所者・診療録）を削除');
 
-  // 病名マスターをシード（病名オートコンプリート用）
-  for (const d of DISEASE_MASTER) {
-    await db.collection('diseaseMaster').add({ name: d.name, kana: d.kana || null, icd10: d.icd10 || null, createdAt: Timestamp.now() });
+  // 医薬品マスターは空のときのみ投入（フル取り込み済みなら保持し、重複投入も避ける）
+  if ((await db.collection('drugMaster').limit(1).get()).empty) {
+    for (const name of DRUG_MASTER_NAMES) {
+      await db.collection('drugMaster').add({ name, createdAt: Timestamp.now() });
+    }
+    console.log(`医薬品マスター ${DRUG_MASTER_NAMES.length} 件を投入`);
+  } else {
+    console.log('医薬品マスターは既存を保持');
   }
-  console.log(`✅ 病名マスター ${DISEASE_MASTER.length} 件を投入`);
+
+  // 病名マスターも空のときのみ投入
+  if ((await db.collection('diseaseMaster').limit(1).get()).empty) {
+    for (const d of DISEASE_MASTER) {
+      await db.collection('diseaseMaster').add({ name: d.name, kana: d.kana || null, icd10: d.icd10 || null, createdAt: Timestamp.now() });
+    }
+    console.log(`病名マスター ${DISEASE_MASTER.length} 件を投入`);
+  } else {
+    console.log('病名マスターは既存を保持');
+  }
 
   const RESIDENT_COUNT = 15;
   let recordCount = 0;
@@ -297,6 +350,7 @@ async function main() {
   let vitalCount = 0;
   let problemCount = 0;
   let labCount = 0;
+  let immunizationCount = 0;
   for (let i = 0; i < RESIDENT_COUNT; i++) {
     const resident = buildResident();
     const ref = await db.collection('residents').add(resident);
@@ -334,13 +388,18 @@ async function main() {
       await ref.collection('labResults').add(lab);
       labCount++;
     }
+    // 予防接種を residents/{id}/immunizations サブコレクションに投入
+    for (const im of buildImmunizations()) {
+      await ref.collection('immunizations').add(im);
+      immunizationCount++;
+    }
   }
-  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件 / プロブレム ${problemCount} 件 / 検査 ${labCount} 件を投入`);
+  console.log(`シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件 / プロブレム ${problemCount} 件 / 検査 ${labCount} 件 / 予防接種 ${immunizationCount} 件を投入`);
   process.exit(0);
 }
 
 main().catch((err) => {
-  console.error('❌ シード失敗:', err);
+  console.error('シード失敗:', err);
   console.error('   → 別ターミナルで `npm run emulators` が起動しているか確認してください。');
   process.exit(1);
 });

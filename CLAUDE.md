@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - アイコンは自作SVGを使わず **@heroicons/react** のコンポーネントを使う。
 - UIの重複を避け、`src/components/common/` の共通部品（ModalHeader / ModalShell / Button / FormField / FormControls / ConfirmDialog / Snackbar / EmptyState / LanguageSwitcher）を使う。同種のUIは既存に揃える。
 - 表示文言はハードコードせず、`src/i18n/locales/{ja,en}.json` にキーで追加し `t()` で参照する（ja/en 両方）。
+- 医療・介護のデータスキーマは独自に作らず、老健カルテ・既存 EMR の記録項目と公的標準（ICD-10・介護保険・予防接種台帳・検査基準値・POMR 等）に準拠する。追加/変更時は `docs/DATA_MODEL.md` の参照とギャップを確認し、根拠を型のコメントと同書に残す。
 
 ## 概要
 
@@ -59,5 +60,6 @@ npm run seed:emulator  # エミュレータへサンプルデータ投入
 ## ドキュメント
 - `docs/LOCAL_DEV.md` — ローカル開発環境
 - `docs/REQUIREMENTS.md` — 要件とロードマップ
+- `docs/DATA_MODEL.md` — データモデルと準拠標準（各スキーマの参照根拠・既知のギャップ）
 - `docs/DRUG_MASTER.md` / `docs/DISEASE_MASTER.md` — マスターデータの取り込み
 - `docs/LOGGING_README.md` — ログ設計

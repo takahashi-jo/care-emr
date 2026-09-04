@@ -8,6 +8,7 @@ import ProblemsManager from './ProblemsManager';
 import VitalsManager from './VitalsManager';
 import LabResultsManager from './LabResultsManager';
 import MedicationsManager from './MedicationsManager';
+import ImmunizationsManager from './ImmunizationsManager';
 import type { Resident } from '../types';
 
 interface PatientChartProps {
@@ -18,7 +19,7 @@ interface PatientChartProps {
   onDelete: (r: Resident) => void;
 }
 
-type Tab = 'overview' | 'records' | 'problems' | 'vitals' | 'labs' | 'meds';
+type Tab = 'overview' | 'records' | 'problems' | 'vitals' | 'labs' | 'meds' | 'immunizations';
 
 // 概要タブ（入所者情報＋編集/削除）
 const Overview = ({ resident, onEdit, onDelete }: { resident: Resident; onEdit: (r: Resident) => void; onDelete: (r: Resident) => void }) => {
@@ -118,6 +119,7 @@ const PatientChart = ({ resident, open, onClose, onEdit, onDelete }: PatientChar
     { key: 'vitals', label: t('chart.tabVitals') },
     { key: 'labs', label: t('chart.tabLabs') },
     { key: 'meds', label: t('chart.tabMeds') },
+    { key: 'immunizations', label: t('chart.tabImmunizations') },
   ];
 
   return (
@@ -153,6 +155,7 @@ const PatientChart = ({ resident, open, onClose, onEdit, onDelete }: PatientChar
           {tab === 'vitals' && <VitalsManager resident={resident} open embedded onClose={() => {}} />}
           {tab === 'labs' && <LabResultsManager resident={resident} open embedded onClose={() => {}} />}
           {tab === 'meds' && <MedicationsManager resident={resident} open embedded onClose={() => {}} />}
+          {tab === 'immunizations' && <ImmunizationsManager resident={resident} open embedded onClose={() => {}} />}
         </div>
       </div>
     </div>

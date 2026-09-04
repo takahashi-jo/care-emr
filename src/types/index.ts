@@ -230,3 +230,37 @@ export interface LabResultFormData {
   items: LabItemFormData[];
   notes?: string;
 }
+
+// 予防接種歴（residents/{id}/immunizations サブコレクション）。接種の時系列記録。
+// 記録事項は予防接種法の台帳（予防接種済証）に準拠：ワクチンの種類・接種年月日・
+// 製造番号(ロット)・製造販売業者名・接種者(医師)名。加えて老健運用で有用な接種回数
+// （COVID等のシリーズ）・実施場所（施設内/協力医療機関）を保持。監査・論理削除付き。
+export interface Immunization {
+  id: string;
+  residentId: string;
+  vaccine: string;         // ワクチンの種類（自由入力＋候補）
+  vaccinatedAt: Date;      // 接種年月日
+  doseNumber?: string;     // 接種回数（例: 1回目 / 追加）。シリーズ物で使用
+  manufacturer?: string;   // 製造販売業者名
+  lot?: string;            // 製造番号（ロット番号）
+  physician?: string;      // 接種者（医師）名
+  facility?: string;       // 実施場所（施設内 / 協力医療機関名）
+  notes?: string;
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ImmunizationFormData {
+  vaccine: string;
+  vaccinatedAt: string;    // 'YYYY-MM-DD'
+  doseNumber?: string;
+  manufacturer?: string;
+  lot?: string;
+  physician?: string;
+  facility?: string;
+  notes?: string;
+}

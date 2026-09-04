@@ -17,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem, LabResult, LabResultFormData } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem, LabResult, LabResultFormData, Immunization, ImmunizationFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
@@ -26,6 +26,7 @@ export const COLLECTIONS = {
   VITALS: 'vitals',
   PROBLEMS: 'problems',
   LAB_RESULTS: 'labResults',
+  IMMUNIZATIONS: 'immunizations',
   DRUG_MASTER: 'drugMaster',
   DISEASE_MASTER: 'diseaseMaster',
   REVISIONS: 'revisions'
@@ -132,6 +133,25 @@ const convertProblemData = (residentId: string, id: string, data: Record<string,
   status: (data.status as ProblemStatus) || '現行',
   onsetDate: data.onsetDate ? convertTimestampToDate(data.onsetDate) : undefined,
   resolvedDate: data.resolvedDate ? convertTimestampToDate(data.resolvedDate) : undefined,
+  notes: data.notes ? String(data.notes) : undefined,
+  createdBy: (data.createdBy as RecordAuthor) || undefined,
+  updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+  deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+  deletedBy: (data.deletedBy as RecordAuthor) || undefined,
+  createdAt: convertTimestampToDate(data.createdAt),
+  updatedAt: convertTimestampToDate(data.updatedAt),
+});
+
+const convertImmunizationData = (residentId: string, id: string, data: Record<string, unknown>): Immunization => ({
+  id,
+  residentId,
+  vaccine: String(data.vaccine || ''),
+  vaccinatedAt: convertTimestampToDate(data.vaccinatedAt),
+  doseNumber: data.doseNumber ? String(data.doseNumber) : undefined,
+  manufacturer: data.manufacturer ? String(data.manufacturer) : undefined,
+  lot: data.lot ? String(data.lot) : undefined,
+  physician: data.physician ? String(data.physician) : undefined,
+  facility: data.facility ? String(data.facility) : undefined,
   notes: data.notes ? String(data.notes) : undefined,
   createdBy: (data.createdBy as RecordAuthor) || undefined,
   updatedBy: (data.updatedBy as RecordAuthor) || undefined,
@@ -826,6 +846,76 @@ export const problemService = {
   async delete(residentId: string, problemId: string, author: RecordAuthor): Promise<void> {
     await updateDoc(
       doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS, problemId),
+      {
+        deletedAt: Timestamp.now(),
+        deletedBy: author,
+        updatedAt: Timestamp.now(),
+        updatedBy: author,
+      }
+    );
+  }
+};
+
+// 予防接種歴は入所者のサブコレクション residents/{residentId}/immunizations に保存
+export const immunizationService = {
+  async getByResidentId(residentId: string): Promise<Immunization[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.IMMUNIZATIONS));
+      return snap.docs
+        .map(d => convertImmunizationData(residentId, d.id, d.data()))
+        .filter(i => !i.deletedAt) // 論理削除は除外
+        .sort((a, b) => b.vaccinatedAt.getTime() - a.vaccinatedAt.getTime()); // 接種日の新しい順
+    } catch (error) {
+      logger.firestoreError('Failed to fetch immunizations', error as Error, { action: 'get_immunizations', residentId });
+      return [];
+    }
+  },
+
+  async create(residentId: string, data: ImmunizationFormData, author: RecordAuthor): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(
+      collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.IMMUNIZATIONS),
+      {
+        vaccine: data.vaccine,
+        vaccinatedAt: Timestamp.fromDate(new Date(data.vaccinatedAt)),
+        doseNumber: data.doseNumber || null,
+        manufacturer: data.manufacturer || null,
+        lot: data.lot || null,
+        physician: data.physician || null,
+        facility: data.facility || null,
+        notes: data.notes || '',
+        createdBy: author,
+        updatedBy: author,
+        deletedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+    );
+    return ref.id;
+  },
+
+  async update(residentId: string, immunizationId: string, data: ImmunizationFormData, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.IMMUNIZATIONS, immunizationId),
+      {
+        vaccine: data.vaccine,
+        vaccinatedAt: Timestamp.fromDate(new Date(data.vaccinatedAt)),
+        doseNumber: data.doseNumber || null,
+        manufacturer: data.manufacturer || null,
+        lot: data.lot || null,
+        physician: data.physician || null,
+        facility: data.facility || null,
+        notes: data.notes || '',
+        updatedBy: author,
+        updatedAt: Timestamp.now(),
+      }
+    );
+  },
+
+  // 論理削除（入力誤り等。真正性のため物理削除しない）
+  async delete(residentId: string, immunizationId: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.IMMUNIZATIONS, immunizationId),
       {
         deletedAt: Timestamp.now(),
         deletedBy: author,
