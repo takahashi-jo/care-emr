@@ -472,9 +472,17 @@ const SearchPanel = () => {
                   </thead>
                   <tbody>
                     {displayed.map((resident) => (
-                      <tr key={resident.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+                      <tr key={resident.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 ${resident.dischargeDate ? 'opacity-60' : ''}`}>
                         <td className="py-3 px-4">
-                          <span className="font-medium text-gray-900">{resident.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{resident.name}</span>
+                            {resident.allergyStatus === 'あり' && (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">アレルギー</span>
+                            )}
+                            {resident.dischargeDate && (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">退所</span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-gray-600">{resident.furigana}</span>
@@ -595,6 +603,16 @@ const SearchPanel = () => {
               onClose={() => setViewingResident(null)}
             />
             <div className="p-6">
+              {viewingResident.dischargeDate ? (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-700 rounded-full">退所済み</span>
+                  <span className="text-sm text-gray-500">退所日: {dayjs(viewingResident.dischargeDate).format('YYYY年MM月DD日')}</span>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">入所中</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">氏名</label>
@@ -627,14 +645,22 @@ const SearchPanel = () => {
                   </span>
                 </div>
               </div>
-              {viewingResident.allergies && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">アレルギー</label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-500 mb-1">アレルギー</label>
+                {viewingResident.allergyStatus === 'あり' ? (
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
-                    {viewingResident.allergies}
+                    {viewingResident.allergies || 'あり'}
                   </span>
-                </div>
-              )}
+                ) : viewingResident.allergyStatus === 'なし' ? (
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
+                    アレルギーなし
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-amber-100 text-amber-800 rounded-full">
+                    未確認
+                  </span>
+                )}
+              </div>
               {viewingResident.medicalHistory && (
                 <div>
                   <hr className="my-4 border-gray-200" />

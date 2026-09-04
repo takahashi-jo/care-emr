@@ -6,7 +6,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
 import { useAuth } from '../hooks/useAuth';
-import type { Resident, ResidentFormData } from '../types';
+import type { Resident, ResidentFormData, AllergyStatus } from '../types';
 import ModalShell from './common/ModalShell';
 import ModalHeader from './common/ModalHeader';
 import Button from './common/Button';
@@ -29,6 +29,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
     admissionDate: dayjs(resident.admissionDate).format('YYYY-MM-DD'),
     dischargeDate: resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY-MM-DD') : '',
     medicalHistory: resident.medicalHistory,
+    allergyStatus: resident.allergyStatus,
     allergies: resident.allergies || '',
     careLevel: resident.careLevel,
   });
@@ -159,9 +160,21 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
               </FormField>
             </div>
 
-            <FormField label="アレルギー" help="薬剤・食物アレルギー等。無ければ空欄">
-              <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+            <FormField label="アレルギー" required>
+              <Select
+                value={formData.allergyStatus || '未確認'}
+                onChange={(e) => setFormData(prev => ({ ...prev, allergyStatus: e.target.value as AllergyStatus, allergies: e.target.value === 'あり' ? prev.allergies : '' }))}
+              >
+                <option value="未確認">未確認</option>
+                <option value="なし">なし</option>
+                <option value="あり">あり</option>
+              </Select>
             </FormField>
+            {formData.allergyStatus === 'あり' && (
+              <FormField label="アレルゲン" required>
+                <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+              </FormField>
+            )}
 
             <FormField label="既往歴">
               <Textarea value={formData.medicalHistory} rows={4} placeholder="既往歴や医療情報を入力してください" onChange={handleInputChange('medicalHistory')} />

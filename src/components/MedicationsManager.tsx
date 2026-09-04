@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { BeakerIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { medicationService } from '../services/firestore';
+import { useAuth } from '../hooks/useAuth';
 import ConfirmDialog from './common/ConfirmDialog';
 import ModalHeader from './common/ModalHeader';
 import DrugNameAutocomplete from './DrugNameAutocomplete';
@@ -75,6 +76,8 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     kind: null,
     medication: null,
   });
+  const { user } = useAuth();
+  const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity });
@@ -124,10 +127,10 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     setFormLoading(true);
     try {
       if (editing) {
-        await medicationService.update(resident.id, editing.id, form);
+        await medicationService.update(resident.id, editing.id, form, author);
         showSnackbar('投薬を更新しました', 'success');
       } else {
-        await medicationService.create(resident.id, form);
+        await medicationService.create(resident.id, form, author);
         showSnackbar('投薬を追加しました', 'success');
       }
       await loadMedications();
@@ -144,7 +147,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     if (!kind || !medication) return;
     try {
       if (kind === 'stop') {
-        await medicationService.stop(resident.id, medication.id, dayjs().format('YYYY-MM-DD'));
+        await medicationService.stop(resident.id, medication.id, dayjs().format('YYYY-MM-DD'), author);
         showSnackbar('投薬を中止にしました', 'success');
       } else {
         await medicationService.delete(resident.id, medication.id);

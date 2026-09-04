@@ -44,6 +44,12 @@ const notes = [
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const pickN = (a, n) => [...a].sort(() => 0.5 - Math.random()).slice(0, n);
 const SEED_AUTHOR = { uid: 'seed', name: '初期データ' };
+function buildAllergy() {
+  const r = Math.random();
+  if (r < 0.25) return { allergyStatus: 'あり', allergies: pick(['ペニシリン', 'そば', '卵', 'ヨード']) };
+  if (r < 0.9) return { allergyStatus: 'なし', allergies: '' };
+  return { allergyStatus: '未確認', allergies: '' };
+}
 
 const MED_PRESETS = [
   { name: 'アムロジピン錠5mg', dosage: '1錠', frequency: '1日1回 朝食後', route: '経口', type: '定期' },
@@ -100,6 +106,8 @@ function buildMedications(admissionDate) {
       startDate: Timestamp.fromDate(start),
       endDate: end ? Timestamp.fromDate(end) : null,
       notes: m.notes || '',
+      createdBy: SEED_AUTHOR,
+      updatedBy: SEED_AUTHOR,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
@@ -125,7 +133,7 @@ function buildResident() {
     admissionDate: Timestamp.fromDate(admission),
     dischargeDate: Math.random() < 0.15 ? Timestamp.fromDate(new Date(2025, Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 27))) : null,
     medicalHistory: pickN(histories, 1 + Math.floor(Math.random() * 3)).join('、'),
-    allergies: Math.random() < 0.3 ? pick(['ペニシリン', 'そば', '卵', 'ヨード']) : '',
+    ...buildAllergy(),
     careLevel: 1 + Math.floor(Math.random() * 5),
     createdBy: SEED_AUTHOR,
     updatedBy: SEED_AUTHOR,
@@ -174,6 +182,9 @@ async function main() {
         residentId: ref.id,
         date: Timestamp.fromDate(new Date(2024, Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 27))),
         record: pick(notes),
+        createdBy: SEED_AUTHOR,
+        updatedBy: SEED_AUTHOR,
+        deletedAt: null,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });

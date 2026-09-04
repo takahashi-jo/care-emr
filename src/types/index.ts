@@ -1,3 +1,5 @@
+export type AllergyStatus = 'あり' | 'なし' | '未確認';
+
 export interface Resident {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export interface Resident {
   admissionDate: Date;
   dischargeDate?: Date;
   medicalHistory: string;
+  allergyStatus?: AllergyStatus;
   allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
   createdBy?: RecordAuthor;
@@ -58,6 +61,7 @@ export interface ResidentFormData {
   admissionDate: string;
   dischargeDate?: string;
   medicalHistory: string;
+  allergyStatus?: AllergyStatus;
   allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
 }
@@ -83,6 +87,8 @@ export interface Medication {
   notes?: string;         // 備考（頓用条件など）
   yjCode?: string;        // 個別医薬品(YJ)コード（薬剤マスター由来）
   hotCode?: string;       // 医薬品HOTコード
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -101,7 +101,8 @@ const ResidentForm = () => {
     formData.birthDate !== '' &&
     formData.roomNumber.trim() !== '' &&
     formData.admissionDate !== '' &&
-    !roomNumberError;
+    !roomNumberError &&
+    (formData.allergyStatus === 'なし' || (formData.allergyStatus === 'あり' && (formData.allergies || '').trim() !== ''));
 
   const hideAlert = () => setAlert(prev => ({ ...prev, show: false }));
 
@@ -194,9 +195,23 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
-            <FormField label="アレルギー" htmlFor="allergies" help="薬剤・食物アレルギー等。無ければ空欄">
-              <TextInput id="allergies" value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+            <FormField label="アレルギー" required help="入所時に必ず確認してください">
+              <div className="flex items-center gap-6 py-1">
+                <label className="flex items-center gap-1.5 text-sm text-gray-800">
+                  <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'なし'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'なし', allergies: '' }))} />
+                  なし
+                </label>
+                <label className="flex items-center gap-1.5 text-sm text-gray-800">
+                  <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'あり'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'あり' }))} />
+                  あり
+                </label>
+              </div>
             </FormField>
+            {formData.allergyStatus === 'あり' && (
+              <FormField label="アレルゲン" required>
+                <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+              </FormField>
+            )}
 
             <FormField label="既往歴・医療情報" htmlFor="medicalHistory">
               <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder="既往歴、注意事項など" onChange={handleInputChange('medicalHistory')} />

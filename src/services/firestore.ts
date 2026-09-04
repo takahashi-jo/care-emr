@@ -17,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
@@ -52,6 +52,7 @@ const convertResidentData = (id: string, data: Record<string, unknown>): Residen
     admissionDate: convertTimestampToDate(data.admissionDate),
     dischargeDate: data.dischargeDate ? convertTimestampToDate(data.dischargeDate) : undefined,
     medicalHistory: String(data.medicalHistory || ''),
+    allergyStatus: (data.allergyStatus as AllergyStatus) || (data.allergies ? 'あり' : '未確認'),
     allergies: data.allergies ? String(data.allergies) : undefined,
     careLevel: data.careLevel as 1 | 2 | 3 | 4 | 5,
     createdBy: (data.createdBy as RecordAuthor) || undefined,
@@ -97,6 +98,8 @@ const convertMedicationData = (residentId: string, id: string, data: Record<stri
   notes: String(data.notes || ''),
   yjCode: data.yjCode ? String(data.yjCode) : undefined,
   hotCode: data.hotCode ? String(data.hotCode) : undefined,
+  createdBy: (data.createdBy as RecordAuthor) || undefined,
+  updatedBy: (data.updatedBy as RecordAuthor) || undefined,
   createdAt: convertTimestampToDate(data.createdAt),
   updatedAt: convertTimestampToDate(data.updatedAt)
 });
@@ -174,6 +177,7 @@ export const residentService = {
         admissionDate: Timestamp.fromDate(new Date(data.admissionDate)),
         dischargeDate: data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null,
         medicalHistory: data.medicalHistory,
+        allergyStatus: data.allergyStatus || '未確認',
         allergies: data.allergies || '',
         careLevel: data.careLevel,
         createdBy: author,
@@ -225,6 +229,7 @@ export const residentService = {
       updateData.dischargeDate = data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null;
     }
     if (data.medicalHistory !== undefined) updateData.medicalHistory = data.medicalHistory;
+    if (data.allergyStatus !== undefined) updateData.allergyStatus = data.allergyStatus;
     if (data.allergies !== undefined) updateData.allergies = data.allergies;
     if (data.careLevel !== undefined) updateData.careLevel = data.careLevel;
 
@@ -519,7 +524,7 @@ export const medicationService = {
     }
   },
 
-  async create(residentId: string, data: MedicationFormData): Promise<string> {
+  async create(residentId: string, data: MedicationFormData, author: RecordAuthor): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(
       collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS),
@@ -534,6 +539,8 @@ export const medicationService = {
         notes: data.notes || '',
         yjCode: data.yjCode || null,
         hotCode: data.hotCode || null,
+        createdBy: author,
+        updatedBy: author,
         createdAt: now,
         updatedAt: now
       }
@@ -541,9 +548,10 @@ export const medicationService = {
     return docRef.id;
   },
 
-  async update(residentId: string, medicationId: string, data: Partial<MedicationFormData>): Promise<void> {
-    const updateData: Record<string, FieldValue | string | Date | null> = {
-      updatedAt: Timestamp.now()
+  async update(residentId: string, medicationId: string, data: Partial<MedicationFormData>, author: RecordAuthor): Promise<void> {
+    const updateData: Record<string, FieldValue | string | Date | null | RecordAuthor> = {
+      updatedAt: Timestamp.now(),
+      updatedBy: author
     };
 
     if (data.name !== undefined) updateData.name = data.name;
@@ -566,11 +574,12 @@ export const medicationService = {
   },
 
   // 中止（削除せず中止日を記録して変遷を残す）
-  async stop(residentId: string, medicationId: string, endDate: string): Promise<void> {
+  async stop(residentId: string, medicationId: string, endDate: string, author: RecordAuthor): Promise<void> {
     await updateDoc(
       doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId),
       {
         endDate: Timestamp.fromDate(new Date(endDate)),
+        updatedBy: author,
         updatedAt: Timestamp.now()
       }
     );
