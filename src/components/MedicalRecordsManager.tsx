@@ -184,7 +184,7 @@ const MedicalRecordsManager = ({ resident, open, onClose, embedded = false }: Me
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           <PlusIcon className="w-5 h-5" />
-          {t('common.newRecord')}
+          {t('medicalRecord.add')}
         </button>
       </ListSectionHeader>
 
@@ -331,7 +331,7 @@ const MedicalRecordsManager = ({ resident, open, onClose, embedded = false }: Me
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editingRecord ? t('medicalRecord.dialogEdit') : t('medicalRecord.dialogNew')}
+                {editingRecord ? t('medicalRecord.editTitle') : t('medicalRecord.addTitle')}
               </h3>
             </div>
 

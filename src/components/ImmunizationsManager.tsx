@@ -225,8 +225,8 @@ const ImmunizationsManager = ({ resident, open, onClose, embedded = false }: Imm
             </div>
 
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('immunization.vaccine')} <span className="text-red-500">*</span></label>
                   <input
                     list="vaccine-presets"
@@ -243,9 +243,6 @@ const ImmunizationsManager = ({ resident, open, onClose, embedded = false }: Imm
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('immunization.vaccinatedAt')} <span className="text-red-500">*</span></label>
                   <input type="date" value={form.vaccinatedAt} onChange={setField('vaccinatedAt')} required className={inputClass} />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('immunization.doseNumber')}</label>
                   <input value={form.doseNumber} onChange={setField('doseNumber')} placeholder={t('immunization.doseNumberPh')} className={inputClass} />
@@ -258,9 +255,6 @@ const ImmunizationsManager = ({ resident, open, onClose, embedded = false }: Imm
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('immunization.lot')}</label>
                   <input value={form.lot} onChange={setField('lot')} placeholder={t('immunization.lotPh')} className={inputClass} />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('immunization.physician')}</label>
                   <input value={form.physician} onChange={setField('physician')} placeholder={t('immunization.physicianPh')} className={inputClass} />

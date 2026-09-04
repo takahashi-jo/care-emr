@@ -198,7 +198,7 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           <PlusIcon className="w-5 h-5" />
-          {t('common.newRecord')}
+          {t('vitals.add')}
         </button>
       </ListSectionHeader>
 
@@ -372,7 +372,7 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editing ? t('vitals.dialogEdit') : t('vitals.dialogNew')}
+                {editing ? t('vitals.editTitle') : t('vitals.addTitle')}
               </h3>
             </div>
 
@@ -397,18 +397,17 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
                 <NumField label={t('vitals.fDiastolic')} value={form.diastolicBP} onChange={setField('diastolicBP')} placeholder="80" />
                 <NumField label={t('vitals.fWeight')} value={form.weight} onChange={setField('weight')} step="0.1" placeholder="55.0" />
                 <NumField label={t('vitals.fGlucose')} value={form.bloodGlucose} onChange={setField('bloodGlucose')} placeholder={t('vitals.glucosePh')} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('vitals.consciousness')}</label>
-                <select
-                  value={form.consciousness}
-                  onChange={setField('consciousness')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">{t('vitals.consciousnessUnrated')}</option>
-                  {JCS_LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
-                </select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('vitals.consciousness')}</label>
+                  <select
+                    value={form.consciousness}
+                    onChange={setField('consciousness')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="">{t('vitals.consciousnessUnrated')}</option>
+                    {JCS_LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
+                  </select>
+                </div>
               </div>
 
               <div>
