@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import 'dayjs/locale/ja';
 import { ArrowRightOnRectangleIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import LanguageSwitcher from './components/common/LanguageSwitcher';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import LoginScreen from './components/LoginScreen';
@@ -32,6 +34,7 @@ function TabPanel(props: TabPanelProps) {
 
 const MainApp = () => {
   const { user, logout, loading } = useAuth();
+  const { t } = useTranslation();
   const [tabValue, setTabValue] = useState(0);
 
 
@@ -47,7 +50,7 @@ const MainApp = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-600 font-medium">読み込み中...</p>
+        <p className="mt-4 text-gray-600 font-medium">{t('app.loading')}</p>
       </div>
     );
   }
@@ -64,13 +67,14 @@ const MainApp = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <h1 className="text-2xl font-bold text-blue-600 tracking-tight">
-                  CareEMR
+                  {t('app.title')}
                 </h1>
                 <span className="text-sm text-gray-600 font-medium hidden sm:block">
-                  介護施設電子カルテシステム
+                  {t('app.subtitle')}
                 </span>
               </div>
               <div className="flex items-center space-x-4">
+                <LanguageSwitcher />
                 <span className="text-sm text-gray-700 hidden sm:block">
                   {user.displayName}
                 </span>
@@ -79,7 +83,7 @@ const MainApp = () => {
                   className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
                 >
                   <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
-                  ログアウト
+                  {t('app.logout')}
                 </button>
               </div>
             </div>
@@ -101,7 +105,7 @@ const MainApp = () => {
               >
                 <span className="flex items-center">
                   <MagnifyingGlassIcon className="w-4 h-4 mr-2" />
-                  入所者検索
+                  {t('app.tabs.roster')}
                 </span>
               </button>
               <button
@@ -114,7 +118,7 @@ const MainApp = () => {
               >
                 <span className="flex items-center">
                   <PlusIcon className="w-4 h-4 mr-2" />
-                  新規入所者登録
+                  {t('app.tabs.register')}
                 </span>
               </button>
             </nav>

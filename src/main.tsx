@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { loadGoogleFonts } from './utils/fonts'
 import { env } from './config/env'
 import { logger } from './services/logger'
+import './i18n'
 import './index.css'
 import App from './App.tsx'
 

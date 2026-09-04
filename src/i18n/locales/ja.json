@@ -1,0 +1,21 @@
+{
+  "app": {
+    "title": "CareEMR",
+    "subtitle": "介護施設電子カルテシステム",
+    "loading": "読み込み中...",
+    "logout": "ログアウト",
+    "tabs": {
+      "roster": "入所者検索",
+      "register": "新規入所者登録"
+    }
+  },
+  "login": {
+    "signInGoogle": "Googleでログイン",
+    "signingIn": "ログイン中...",
+    "restricted": "認証されたユーザーのみアクセス可能"
+  },
+  "lang": {
+    "ja": "日本語",
+    "en": "English"
+  }
+}

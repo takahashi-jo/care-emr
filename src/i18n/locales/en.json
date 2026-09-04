@@ -1,0 +1,21 @@
+{
+  "app": {
+    "title": "CareEMR",
+    "subtitle": "EMR for Care Facilities",
+    "loading": "Loading...",
+    "logout": "Sign out",
+    "tabs": {
+      "roster": "Residents",
+      "register": "Add resident"
+    }
+  },
+  "login": {
+    "signInGoogle": "Sign in with Google",
+    "signingIn": "Signing in...",
+    "restricted": "Access is restricted to authorized users"
+  },
+  "lang": {
+    "ja": "日本語",
+    "en": "English"
+  }
+}

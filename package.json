@@ -20,9 +20,11 @@
     "@hookform/resolvers": "^5.2.2",
     "dayjs": "^1.11.18",
     "firebase": "^12.3.0",
+    "i18next": "26.4.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.63.0",
+    "react-i18next": "17.0.13",
     "recharts": "3.10.1",
     "serve": "^14.2.5",
     "yup": "^1.7.0"
