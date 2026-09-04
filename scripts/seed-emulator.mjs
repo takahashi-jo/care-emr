@@ -132,9 +132,11 @@ function buildVitals() {
       systolicBP: 105 + Math.floor(Math.random() * 45),         // 105〜149
       diastolicBP: 60 + Math.floor(Math.random() * 35),         // 60〜94
       pulse: 58 + Math.floor(Math.random() * 40),               // 58〜97
+      respiratoryRate: 14 + Math.floor(Math.random() * 12),     // 14〜25（時々頻呼吸）
       spo2: 92 + Math.floor(Math.random() * 8),                 // 92〜99（時々低め）
       weight: round1(baseWeight + (Math.random() * 2 - 1)),     // 基準±1kg
       bloodGlucose: Math.random() < 0.4 ? 90 + Math.floor(Math.random() * 90) : null, // 一部のみ測定
+      consciousness: Math.random() < 0.7 ? '清明' : pick(['I-1', 'I-2', 'II-10']), // 多くは清明
       notes: '',
       createdBy: SEED_AUTHOR,
       updatedBy: SEED_AUTHOR,

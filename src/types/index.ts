@@ -142,9 +142,11 @@ export interface VitalSign {
   systolicBP?: number;     // 収縮期血圧 mmHg
   diastolicBP?: number;    // 拡張期血圧 mmHg
   pulse?: number;          // 脈拍 /分
+  respiratoryRate?: number; // 呼吸数 /分
   spo2?: number;           // SpO₂ %
   weight?: number;         // 体重 kg
   bloodGlucose?: number;   // 血糖 mg/dL（任意）
+  consciousness?: string;  // 意識レベル（JCS。'' は未評価）
   notes?: string;          // 備考（測定条件・特記事項）
   createdBy?: RecordAuthor;
   updatedBy?: RecordAuthor;
@@ -160,9 +162,11 @@ export interface VitalSignFormData {
   systolicBP?: string;
   diastolicBP?: string;
   pulse?: string;
+  respiratoryRate?: string;
   spo2?: string;
   weight?: string;
   bloodGlucose?: string;
+  consciousness?: string;
   notes?: string;
 }
 

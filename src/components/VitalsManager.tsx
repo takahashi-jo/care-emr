@@ -10,7 +10,7 @@ import EmptyState from './common/EmptyState';
 import { vitalSignService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, VitalSign, VitalSignFormData } from '../types';
-import { isVitalAbnormal } from '../constants/vitalReference';
+import { isVitalAbnormal, isConsciousnessAbnormal, JCS_LEVELS } from '../constants/vitalReference';
 
 // recharts は重いので「推移」タブを開いたときだけ読み込む（遅延ロードでコード分割）
 const VitalsTrend = lazy(() => import('./VitalsTrend'));
@@ -30,9 +30,11 @@ const emptyForm = (): VitalSignFormData => ({
   systolicBP: '',
   diastolicBP: '',
   pulse: '',
+  respiratoryRate: '',
   spo2: '',
   weight: '',
   bloodGlucose: '',
+  consciousness: '',
   notes: '',
 });
 
@@ -111,20 +113,22 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
       systolicBP: v.systolicBP?.toString() ?? '',
       diastolicBP: v.diastolicBP?.toString() ?? '',
       pulse: v.pulse?.toString() ?? '',
+      respiratoryRate: v.respiratoryRate?.toString() ?? '',
       spo2: v.spo2?.toString() ?? '',
       weight: v.weight?.toString() ?? '',
       bloodGlucose: v.bloodGlucose?.toString() ?? '',
+      consciousness: v.consciousness ?? '',
       notes: v.notes ?? '',
     });
     setDialogOpen(true);
   };
 
   const setField = (field: keyof VitalSignFormData) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setForm(prev => ({ ...prev, [field]: e.target.value }));
 
   const hasAnyMeasure = (f: VitalSignFormData) =>
-    [f.temperature, f.systolicBP, f.diastolicBP, f.pulse, f.spo2, f.weight, f.bloodGlucose]
+    [f.temperature, f.systolicBP, f.diastolicBP, f.pulse, f.respiratoryRate, f.spo2, f.weight, f.bloodGlucose, f.consciousness]
       .some(s => (s ?? '').trim() !== '');
 
   const canSubmit = form.measuredAt !== '' && hasAnyMeasure(form);
@@ -217,9 +221,11 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colTemp')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colBP')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colPulse')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colRR')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colSpo2')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colWeight')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colGlucose')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colConsciousness')}</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-[160px]">{t('vitals.colNotes')}</th>
                           <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">{t('vitals.colActions')}</th>
                         </tr>
@@ -247,9 +253,17 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
                               )}
                             </td>
                             <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.pulse, '', isVitalAbnormal.pulse)}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.respiratoryRate, '', isVitalAbnormal.respiratoryRate)}</td>
                             <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.spo2, '%', isVitalAbnormal.spo2)}</td>
                             <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.weight, 'kg')}</td>
                             <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.bloodGlucose, '')}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">
+                              {v.consciousness ? (
+                                <span className={isConsciousnessAbnormal(v.consciousness) ? 'text-red-600 font-semibold' : 'text-gray-900'}>{v.consciousness}</span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
                             <td className="px-4 pt-3">
                               <div className="text-sm text-gray-700 whitespace-pre-wrap max-w-xs line-clamp-2">
                                 {v.notes ? v.notes : <span className="text-gray-400">-</span>}
@@ -275,7 +289,7 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
                             </td>
                           </tr>
                           <tr>
-                            <td colSpan={9} className="px-4 pb-3 pt-1 text-xs text-gray-400">
+                            <td colSpan={11} className="px-4 pb-3 pt-1 text-xs text-gray-400">
                               {t('common.createdBy', { name: v.createdBy?.name ?? '-', date: dayjs(v.createdAt).format('YYYY/MM/DD HH:mm') })}
                               {v.updatedBy && <> / {t('common.updatedBy', { name: v.updatedBy.name, date: dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm') })}</>}
                             </td>
@@ -377,11 +391,24 @@ const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsMana
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <NumField label={t('vitals.fTemp')} value={form.temperature} onChange={setField('temperature')} step="0.1" placeholder="36.5" />
                 <NumField label={t('vitals.fPulse')} value={form.pulse} onChange={setField('pulse')} placeholder="72" />
+                <NumField label={t('vitals.fRR')} value={form.respiratoryRate} onChange={setField('respiratoryRate')} placeholder="16" />
                 <NumField label={t('vitals.fSpo2')} value={form.spo2} onChange={setField('spo2')} placeholder="98" />
                 <NumField label={t('vitals.fSystolic')} value={form.systolicBP} onChange={setField('systolicBP')} placeholder="120" />
                 <NumField label={t('vitals.fDiastolic')} value={form.diastolicBP} onChange={setField('diastolicBP')} placeholder="80" />
                 <NumField label={t('vitals.fWeight')} value={form.weight} onChange={setField('weight')} step="0.1" placeholder="55.0" />
                 <NumField label={t('vitals.fGlucose')} value={form.bloodGlucose} onChange={setField('bloodGlucose')} placeholder={t('vitals.glucosePh')} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('vitals.consciousness')}</label>
+                <select
+                  value={form.consciousness}
+                  onChange={setField('consciousness')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t('vitals.consciousnessUnrated')}</option>
+                  {JCS_LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
+                </select>
               </div>
 
               <div>
