@@ -146,18 +146,16 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <FormField label="性別" htmlFor="gender" required>
                 <Select id="gender" value={formData.gender} required onChange={handleInputChange('gender')}>
                   <option value="男性">男性</option>
                   <option value="女性">女性</option>
                 </Select>
               </FormField>
-              <div className="sm:col-span-2">
-                <FormField label="生年月日" htmlFor="birthDate" required help={formData.birthDate ? `年齢: ${calculateAge(formData.birthDate)}歳` : undefined}>
-                  <TextInput type="date" id="birthDate" value={formData.birthDate} required onChange={handleInputChange('birthDate')} />
-                </FormField>
-              </div>
+              <FormField label="生年月日" htmlFor="birthDate" required help={formData.birthDate ? `満年齢: ${calculateAge(formData.birthDate)}歳` : undefined}>
+                <TextInput type="date" id="birthDate" value={formData.birthDate} required onChange={handleInputChange('birthDate')} />
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
