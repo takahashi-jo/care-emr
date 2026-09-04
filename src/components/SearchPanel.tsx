@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { BeakerIcon, UserIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -25,6 +25,12 @@ const SearchPanel = () => {
   const [searchResults, setSearchResults] = useState<Resident[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // 回診ビュー（一覧ファースト）
+  const [allResidents, setAllResidents] = useState<Resident[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<'room' | 'name' | 'careLevel'>('room');
+  const [showDischarged, setShowDischarged] = useState(false);
 
   const convertSpacesToFullWidth = (text: string): string => {
     return text.replace(/ /g, '　');
@@ -77,6 +83,29 @@ const SearchPanel = () => {
   const calculateAge = (birthDate: Date): number => {
     return dayjs().diff(dayjs(birthDate), 'year');
   };
+
+  // マウント時に全入所者を取得（回診の既定ビュー）
+  useEffect(() => {
+    (async () => {
+      setListLoading(true);
+      try {
+        setAllResidents(await residentService.getAll());
+      } finally {
+        setListLoading(false);
+      }
+    })();
+  }, []);
+
+  const roomNum = (r: Resident) => parseInt((r.roomNumber || '').replace(/\D/g, ''), 10) || 0;
+  const sortResidents = (list: Resident[]) => {
+    const arr = [...list];
+    if (sortKey === 'room') arr.sort((a, b) => roomNum(a) - roomNum(b) || a.name.localeCompare(b.name, 'ja'));
+    else if (sortKey === 'name') arr.sort((a, b) => (a.furigana || '').localeCompare(b.furigana || '', 'ja'));
+    else arr.sort((a, b) => (a.careLevel || 0) - (b.careLevel || 0));
+    return arr;
+  };
+  const baseList = hasSearched ? searchResults : allResidents;
+  const displayed = sortResidents(baseList.filter(r => showDischarged || !r.dischargeDate));
 
   const handleSearchTypeChange = (newType: SearchType) => {
     setSearchType(newType);
@@ -207,6 +236,7 @@ const SearchPanel = () => {
       );
 
       setSearchResults(prev => prev.filter(r => r.id !== resident.id));
+      setAllResidents(prev => prev.filter(r => r.id !== resident.id));
       showSnackbar(`${resident.name}さんの情報を削除しました`, 'success');
       setDeleteConfirmDialog({ open: false, resident: null });
 
@@ -385,30 +415,47 @@ const SearchPanel = () => {
         </div>
       </div>
 
-      {hasSearched && (
+      {(
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="p-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">検索結果</h3>
-              {lastSearchValue && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  {hasSearched ? '検索結果' : '入所者一覧（回診）'}
+                </h3>
                 <p className="text-sm text-gray-600">
-                  「{lastSearchValue}」で検索した結果: {searchResults.length}件
+                  {hasSearched && lastSearchValue ? `「${lastSearchValue}」の結果: ` : '入所中 '}{displayed.length}名
                 </p>
-              )}
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <label className="flex items-center gap-1 text-gray-700">
+                  並べ替え
+                  <select
+                    value={sortKey}
+                    onChange={(e) => setSortKey(e.target.value as 'room' | 'name' | 'careLevel')}
+                    className="px-2 py-1 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="room">部屋順</option>
+                    <option value="name">氏名順</option>
+                    <option value="careLevel">要介護度順</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-1.5 text-gray-700">
+                  <input type="checkbox" checked={showDischarged} onChange={(e) => setShowDischarged(e.target.checked)} />
+                  退所者も表示
+                </label>
+              </div>
             </div>
 
-            {loading ? (
+            {(loading || listLoading) ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((item) => (
                   <div key={item} className="h-16 bg-gray-200 rounded-lg animate-pulse"></div>
                 ))}
               </div>
-            ) : searchResults.length === 0 ? (
-              <div className="text-center py-8 bg-blue-50 rounded-lg border border-blue-200">
-                <svg className="w-12 h-12 text-blue-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-blue-800 font-medium">該当する入所者が見つかりませんでした</p>
+            ) : displayed.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-600 font-medium">{hasSearched ? '該当する入所者が見つかりませんでした' : '入所者がいません'}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -424,7 +471,7 @@ const SearchPanel = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {searchResults.map((resident) => (
+                    {displayed.map((resident) => (
                       <tr key={resident.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                         <td className="py-3 px-4">
                           <span className="font-medium text-gray-900">{resident.name}</span>
