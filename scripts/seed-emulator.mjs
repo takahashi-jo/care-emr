@@ -91,6 +91,9 @@ const DRUG_MASTER_NAMES = [
   'モーラステープ20mg', 'ロキソニンテープ100mg', 'ヒルドイドソフト軟膏0.3%', '白色ワセリン', 'アズノール軟膏0.033%', 'リンデロンVG軟膏',
 ];
 
+// 経路から代表的な剤形をあてる（サンプル用の近似）
+const FORM_BY_ROUTE = { '経口': '錠剤', '外用': '軟膏・クリーム', '貼付': '貼付剤', '注射': '注射剤', 'その他': 'その他' };
+
 function buildMedications(admissionDate) {
   const chosen = pickN(MED_PRESETS, Math.floor(Math.random() * 4)); // 0〜3件
   return chosen.map((m, idx) => {
@@ -101,10 +104,13 @@ function buildMedications(admissionDate) {
     const end = stopped ? new Date(start.getTime() + 60 * 24 * 3600 * 1000) : null;
     return {
       name: m.name,
+      dosageForm: FORM_BY_ROUTE[m.route] || '錠剤',
       dosage: m.dosage,
       frequency: m.frequency,
+      daysSupply: m.type === '定期' ? pick([14, 28, 30, 30, 90]) : null,
       route: m.route,
       type: m.type,
+      prescriber: '山田 一郎',
       startDate: Timestamp.fromDate(start),
       endDate: end ? Timestamp.fromDate(end) : null,
       notes: m.notes || '',

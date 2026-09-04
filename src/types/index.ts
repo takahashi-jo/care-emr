@@ -94,10 +94,13 @@ export interface Medication {
   id: string;
   residentId: string;
   name: string;          // 薬剤名（例：アムロジピン錠5mg）
+  dosageForm?: string;   // 剤形（錠剤/カプセル/散剤 等）
   dosage: string;        // 1回量（例：1錠 / 5mg）
   frequency: string;     // 用法（例：1日2回 朝夕食後）
+  daysSupply?: number;   // 投与日数（日分）
   route: MedicationRoute; // 経路
   type: MedicationType;   // 定期 / 頓用
+  prescriber?: string;    // 処方医
   startDate: Date;        // 開始日
   endDate?: Date;         // 中止日（未設定なら継続中）
   notes?: string;         // 備考（頓用条件など）
@@ -111,10 +114,13 @@ export interface Medication {
 
 export interface MedicationFormData {
   name: string;
+  dosageForm?: string;
   dosage: string;
   frequency: string;
+  daysSupply?: string;
   route: MedicationRoute;
   type: MedicationType;
+  prescriber?: string;
   startDate: string;      // 'YYYY-MM-DD'
   endDate?: string;
   notes?: string;

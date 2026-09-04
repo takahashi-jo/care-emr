@@ -10,6 +10,7 @@ import ModalHeader from './common/ModalHeader';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
 import DrugNameAutocomplete from './DrugNameAutocomplete';
+import { DOSAGE_FORMS } from '../constants/dosageForms';
 import type { Resident, Medication, MedicationFormData, MedicationRoute, MedicationType } from '../types';
 
 interface MedicationsManagerProps {
@@ -70,10 +71,13 @@ const TYPE_KEY = (ty: string) => (ty === '頓用' ? 'medication.typeAsNeeded' : 
 
 const emptyForm = (): MedicationFormData => ({
   name: '',
+  dosageForm: '',
   dosage: '',
   frequency: '',
+  daysSupply: '',
   route: '経口',
   type: '定期',
+  prescriber: '',
   startDate: dayjs().format('YYYY-MM-DD'),
   endDate: '',
   notes: '',
@@ -125,10 +129,13 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
     setEditing(medication);
     setForm({
       name: medication.name,
+      dosageForm: medication.dosageForm || '',
       dosage: medication.dosage,
       frequency: medication.frequency,
+      daysSupply: medication.daysSupply?.toString() ?? '',
       route: medication.route,
       type: medication.type,
+      prescriber: medication.prescriber || '',
       startDate: dayjs(medication.startDate).format('YYYY-MM-DD'),
       endDate: medication.endDate ? dayjs(medication.endDate).format('YYYY-MM-DD') : '',
       notes: medication.notes || '',
@@ -212,6 +219,7 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-900">{med.name}</span>
+                            {med.dosageForm && <span className="text-xs text-gray-500">{med.dosageForm}</span>}
                             {med.dosage && <span className="text-sm text-gray-600">{med.dosage}</span>}
                             <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${med.type === '頓用' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
                               {t(TYPE_KEY(med.type))}
@@ -225,11 +233,15 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
                               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{t('medication.active')}</span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-700 mt-1">{med.frequency}</div>
+                          <div className="text-sm text-gray-700 mt-1">
+                            {med.frequency}
+                            {med.daysSupply ? ` ・ ${t('medication.daysSupplyInline', { days: med.daysSupply })}` : ''}
+                          </div>
                           <div className="text-xs text-gray-500 mt-1">
                             {t('medication.startLabel', { date: dayjs(med.startDate).format('YYYY/MM/DD') })}
                             {med.endDate && ` / ${t('medication.stopLabel', { date: dayjs(med.endDate).format('YYYY/MM/DD') })}`}
                           </div>
+                          {med.prescriber && <div className="text-xs text-gray-500 mt-1">{t('medication.prescriberInline', { name: med.prescriber })}</div>}
                           {med.notes && <div className="text-xs text-gray-600 mt-1">{t('medication.notesInline', { text: med.notes })}</div>}
                           <div className="text-xs text-gray-400 mt-1">
                             {t('common.createdBy', { name: med.createdBy?.name ?? '-', date: dayjs(med.createdAt).format('YYYY/MM/DD HH:mm') })}
@@ -314,6 +326,17 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.dosageForm')}</label>
+                  <select
+                    value={form.dosageForm}
+                    onChange={(e) => setForm(prev => ({ ...prev, dosageForm: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                  >
+                    <option value="">{t('medication.dosageFormUnset')}</option>
+                    {DOSAGE_FORMS.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.dosage')}</label>
                   <input
                     type="text"
@@ -323,6 +346,9 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.frequency')}</label>
                   <input
@@ -336,6 +362,17 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
                   <datalist id="frequency-presets">
                     {FREQUENCY_PRESETS.map(p => <option key={p} value={p} />)}
                   </datalist>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.daysSupply')}</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={form.daysSupply}
+                    onChange={(e) => setForm(prev => ({ ...prev, daysSupply: e.target.value }))}
+                    placeholder={t('medication.daysSupplyPh')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </div>
               </div>
 
@@ -379,6 +416,19 @@ const MedicationsManager = ({ resident, open, onClose, embedded = false }: Medic
                     type="date"
                     value={form.endDate}
                     onChange={(e) => setForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.prescriber')}</label>
+                  <input
+                    type="text"
+                    value={form.prescriber}
+                    onChange={(e) => setForm(prev => ({ ...prev, prescriber: e.target.value }))}
+                    placeholder={t('medication.prescriberPh')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>

@@ -107,10 +107,13 @@ const convertMedicationData = (residentId: string, id: string, data: Record<stri
   id,
   residentId,
   name: String(data.name || ''),
+  dosageForm: data.dosageForm ? String(data.dosageForm) : undefined,
   dosage: String(data.dosage || ''),
   frequency: String(data.frequency || ''),
+  daysSupply: data.daysSupply === null || data.daysSupply === undefined || data.daysSupply === '' ? undefined : Number(data.daysSupply),
   route: (data.route as Medication['route']) || '経口',
   type: (data.type as Medication['type']) || '定期',
+  prescriber: data.prescriber ? String(data.prescriber) : undefined,
   startDate: convertTimestampToDate(data.startDate),
   endDate: data.endDate ? convertTimestampToDate(data.endDate) : undefined,
   notes: String(data.notes || ''),
@@ -656,10 +659,13 @@ export const medicationService = {
       collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS),
       {
         name: data.name,
+        dosageForm: data.dosageForm || null,
         dosage: data.dosage,
         frequency: data.frequency,
+        daysSupply: data.daysSupply ? Number(data.daysSupply) : null,
         route: data.route,
         type: data.type,
+        prescriber: data.prescriber || null,
         startDate: Timestamp.fromDate(new Date(data.startDate)),
         endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null,
         notes: data.notes || '',
@@ -675,16 +681,19 @@ export const medicationService = {
   },
 
   async update(residentId: string, medicationId: string, data: Partial<MedicationFormData>, author: RecordAuthor): Promise<void> {
-    const updateData: Record<string, FieldValue | string | Date | null | RecordAuthor> = {
+    const updateData: Record<string, FieldValue | string | number | Date | null | RecordAuthor> = {
       updatedAt: Timestamp.now(),
       updatedBy: author
     };
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.dosageForm !== undefined) updateData.dosageForm = data.dosageForm || null;
     if (data.dosage !== undefined) updateData.dosage = data.dosage;
     if (data.frequency !== undefined) updateData.frequency = data.frequency;
+    if (data.daysSupply !== undefined) updateData.daysSupply = data.daysSupply ? Number(data.daysSupply) : null;
     if (data.route !== undefined) updateData.route = data.route;
     if (data.type !== undefined) updateData.type = data.type;
+    if (data.prescriber !== undefined) updateData.prescriber = data.prescriber || null;
     if (data.startDate !== undefined) updateData.startDate = Timestamp.fromDate(new Date(data.startDate));
     if (data.endDate !== undefined) {
       updateData.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
