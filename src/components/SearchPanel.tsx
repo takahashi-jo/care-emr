@@ -12,7 +12,7 @@ import MedicalRecordsManager from './MedicalRecordsManager';
 import MedicationsManager from './MedicationsManager';
 import ResidentEditForm from './ResidentEditForm';
 
-type SearchType = 'name' | 'room' | 'medication' | 'careLevel';
+type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
 
 const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const [searchType, setSearchType] = useState<SearchType>('name');
@@ -300,8 +300,8 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               >
                 <option value="name">氏名</option>
                 <option value="room">部屋番号</option>
-                <option value="medication">服薬中の薬剤</option>
                 <option value="careLevel">要介護度</option>
+                <option value="medication">継続中の薬剤</option>
               </select>
             </div>
 

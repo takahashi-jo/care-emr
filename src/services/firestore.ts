@@ -500,7 +500,7 @@ export const medicationService = {
     }
   },
 
-  // 全入所者の「継続中」投薬をまとめて取得（回診一覧での服薬表示・服薬フィルタ用）。
+  // 全入所者の「継続中」投薬をまとめて取得（回診一覧の継続薬表示・継続薬フィルタ用）。
   // collectionGroup を制約なしで1回読むだけなので複合インデックス不要（本番でも安全）。
   // 施設規模（数十〜百名）では十分軽量。継続中（中止日なし）のみ入所者IDごとに集約して返す。
   async getContinuingByAllResidents(): Promise<Map<string, Medication[]>> {
