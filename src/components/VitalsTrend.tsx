@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer } from 'recharts';
 import type { VitalSign } from '../types';
 import { isVitalAbnormal } from '../constants/vitalReference';
 
@@ -21,14 +21,14 @@ const VitalsTrend = ({ vitals }: { vitals: VitalSign[] }) => {
     bloodGlucose: v.bloodGlucose ?? null,
   }));
 
-  const metrics: { key: string; title: string; unit: string; lines: { dataKey: string; name: string; color: string; abnormal?: (v: number) => boolean }[] }[] = [
-    { key: 'temperature', title: '体温', unit: '℃', lines: [{ dataKey: 'temperature', name: '体温', color: '#2f5b95', abnormal: isVitalAbnormal.temperature }] },
-    { key: 'bp', title: '血圧', unit: 'mmHg', lines: [
+  const metrics: { key: string; title: string; unit: string; thresholds?: number[]; lines: { dataKey: string; name: string; color: string; abnormal?: (v: number) => boolean }[] }[] = [
+    { key: 'temperature', title: '体温', unit: '℃', thresholds: [37.5], lines: [{ dataKey: 'temperature', name: '体温', color: '#2f5b95', abnormal: isVitalAbnormal.temperature }] },
+    { key: 'bp', title: '血圧', unit: 'mmHg', thresholds: [140, 90], lines: [
         { dataKey: 'systolicBP', name: '収縮期', color: '#2f5b95', abnormal: isVitalAbnormal.systolicBP },
         { dataKey: 'diastolicBP', name: '拡張期', color: '#90b4dd', abnormal: isVitalAbnormal.diastolicBP },
       ] },
-    { key: 'pulse', title: '脈拍', unit: '/分', lines: [{ dataKey: 'pulse', name: '脈拍', color: '#2f5b95', abnormal: isVitalAbnormal.pulse }] },
-    { key: 'spo2', title: 'SpO₂', unit: '%', lines: [{ dataKey: 'spo2', name: 'SpO₂', color: '#2f5b95', abnormal: isVitalAbnormal.spo2 }] },
+    { key: 'pulse', title: '脈拍', unit: '/分', thresholds: [50, 100], lines: [{ dataKey: 'pulse', name: '脈拍', color: '#2f5b95', abnormal: isVitalAbnormal.pulse }] },
+    { key: 'spo2', title: 'SpO₂', unit: '%', thresholds: [93], lines: [{ dataKey: 'spo2', name: 'SpO₂', color: '#2f5b95', abnormal: isVitalAbnormal.spo2 }] },
     { key: 'weight', title: '体重', unit: 'kg', lines: [{ dataKey: 'weight', name: '体重', color: '#2f5b95' }] },
     { key: 'bloodGlucose', title: '血糖', unit: 'mg/dL', lines: [{ dataKey: 'bloodGlucose', name: '血糖', color: '#2f5b95' }] },
   ];
@@ -48,6 +48,16 @@ const VitalsTrend = ({ vitals }: { vitals: VitalSign[] }) => {
               <YAxis domain={['auto', 'auto']} width={40} tick={{ fontSize: 11, fill: '#94a3b8' }} />
               <Tooltip contentStyle={{ fontSize: 12 }} />
               {m.lines.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
+              {(m.thresholds ?? []).map((t) => (
+                <ReferenceLine
+                  key={t}
+                  y={t}
+                  stroke={ABNORMAL_COLOR}
+                  strokeDasharray="4 3"
+                  strokeOpacity={0.5}
+                  ifOverflow="extendDomain"
+                />
+              ))}
               {m.lines.map((l) => (
                 <Line
                   key={l.dataKey}
