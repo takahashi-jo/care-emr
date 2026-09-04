@@ -107,6 +107,15 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
 
   const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
+  // アレルギー「あり」ならアレルゲン必須（新規登録フォームと同じ基準）
+  const isFormValid = () =>
+    formData.name.trim() !== '' &&
+    formData.furigana.trim() !== '' &&
+    formData.birthDate !== '' &&
+    formData.roomNumber.trim() !== '' &&
+    formData.admissionDate !== '' &&
+    (formData.allergyStatus !== 'あり' || (formData.allergies || '').trim() !== '');
+
   return (
     <>
       <ModalShell maxWidth="max-w-4xl">
@@ -171,8 +180,8 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
               </Select>
             </FormField>
             {formData.allergyStatus === 'あり' && (
-              <FormField label="アレルゲン" required>
-                <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+              <FormField label="アレルゲン" required error={(formData.allergies || '').trim() === '' ? 'アレルゲンを入力してください' : undefined}>
+                <TextInput value={formData.allergies || ''} required error={(formData.allergies || '').trim() === ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
               </FormField>
             )}
 
@@ -184,7 +193,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
               <Button type="button" variant="secondary" icon={XMarkIcon} onClick={onCancel} disabled={loading}>
                 キャンセル
               </Button>
-              <Button type="submit" icon={CheckIcon} disabled={loading}>
+              <Button type="submit" icon={CheckIcon} disabled={loading || !isFormValid()}>
                 {loading ? '更新中...' : '更新'}
               </Button>
             </div>

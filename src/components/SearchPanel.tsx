@@ -476,6 +476,9 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[100px]">氏名</th>
+                      {showDischarged && (
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[80px]">状態</th>
+                      )}
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[120px]">フリガナ</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">年齢</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">部屋</th>
@@ -488,13 +491,24 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                     {displayed.map((resident) => (
                       <tr key={resident.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 ${resident.dischargeDate ? 'opacity-60' : ''}`}>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900">{resident.name}</span>
-                            {resident.dischargeDate && (
-                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">退所</span>
-                            )}
-                          </div>
+                          <span className="font-medium text-gray-900">{resident.name}</span>
                         </td>
+                        {showDischarged && (
+                          <td className="py-3 px-4">
+                            {resident.dischargeDate ? (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-full"
+                                title={`退所日: ${dayjs(resident.dischargeDate).format('YYYY年MM月DD日')}`}
+                              >
+                                退所
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                入所中
+                              </span>
+                            )}
+                          </td>
+                        )}
                         <td className="py-3 px-4">
                           <span className="text-gray-600">{resident.furigana}</span>
                         </td>
@@ -664,6 +678,12 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
                     要介護{viewingResident.careLevel}
                   </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">入所日</label>
+                  <p className="text-lg font-medium text-gray-900">
+                    {dayjs(viewingResident.admissionDate).format('YYYY年MM月DD日')}
+                  </p>
                 </div>
               </div>
               <div className="mb-4">
