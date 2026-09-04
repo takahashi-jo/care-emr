@@ -13,6 +13,13 @@ service cloud.firestore {
       }
     }
 
+    // 投薬のコレクショングループ検索（回診一覧の継続薬表示・服薬フィルタ用）。
+    // collectionGroup クエリはネストした match ではなく、この再帰ワイルドカードの
+    // ルールが別途必要（無いと list が拒否される）。読み取り専用で許可。
+    match /{path=**}/medications/{medId} {
+      allow read: if isAdmin();
+    }
+
     // 診療録：真正性のため、物理削除禁止・作成メタデータ不変（追記型）
     match /medicalRecords/{recordId} {
       allow read: if isAdmin();
