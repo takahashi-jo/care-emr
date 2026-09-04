@@ -109,6 +109,8 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   };
   const baseList = hasSearched ? searchResults : allResidents;
   const displayed = sortResidents(baseList.filter(r => showDischarged || !r.dischargeDate));
+  const initialLoading = listLoading && allResidents.length === 0; // 初回（データ無し）
+  const refreshing = listLoading && allResidents.length > 0;       // 再取得（データ有り）
 
   const handleSearchTypeChange = (newType: SearchType) => {
     setSearchType(newType);
@@ -423,8 +425,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
           <div className="p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
                   {hasSearched ? '検索結果' : '入所者一覧（回診）'}
+                  {refreshing && (
+                    <span className="inline-flex items-center gap-1 text-xs font-normal text-gray-400">
+                      <span className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></span>
+                      更新中
+                    </span>
+                  )}
                 </h3>
                 <p className="text-sm text-gray-600">
                   {hasSearched && lastSearchValue ? `「${lastSearchValue}」の結果: ` : '入所中 '}{displayed.length}名
@@ -450,7 +458,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               </div>
             </div>
 
-            {(loading || listLoading) ? (
+            {(loading || initialLoading) ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((item) => (
                   <div key={item} className="h-16 bg-gray-200 rounded-lg animate-pulse"></div>
