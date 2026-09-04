@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, HeartIcon, ClipboardDocumentListIcon, DocumentChartBarIcon } from '@heroicons/react/24/outline';
+import { UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
@@ -16,6 +16,7 @@ import MedicationsManager from './MedicationsManager';
 import VitalsManager from './VitalsManager';
 import ProblemsManager from './ProblemsManager';
 import LabResultsManager from './LabResultsManager';
+import RecordsMenu from './RecordsMenu';
 import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
@@ -508,7 +509,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('roster.colRoom')}</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('resident.careLevel')}</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">{t('roster.medsColumn')}</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[260px]">{t('roster.colActions')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[180px]">{t('roster.colActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -561,47 +562,20 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-1 justify-center">
+                            <RecordsMenu
+                              resident={resident}
+                              onRecords={handleViewMedicalRecords}
+                              onProblems={handleViewProblems}
+                              onVitals={handleViewVitals}
+                              onLabs={handleViewLabs}
+                              onMeds={handleViewMedications}
+                            />
                             <button
                               onClick={() => handleViewResident(resident)}
                               className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-150"
                               title={t('roster.actionDetail')}
                             >
                               <EyeIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleViewMedicalRecords(resident)}
-                              className="p-1.5 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionRecords')}
-                            >
-                              <DocumentTextIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleViewProblems(resident)}
-                              className="p-1.5 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionProblems')}
-                            >
-                              <ClipboardDocumentListIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleViewVitals(resident)}
-                              className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionVitals')}
-                            >
-                              <HeartIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleViewLabs(resident)}
-                              className="p-1.5 text-cyan-600 hover:bg-cyan-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionLabs')}
-                            >
-                              <DocumentChartBarIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleViewMedications(resident)}
-                              className="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionMeds')}
-                            >
-                              <BeakerIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleEditResident(resident)}

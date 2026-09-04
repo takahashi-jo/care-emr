@@ -198,6 +198,7 @@
     "actionVitals": "バイタル",
     "actionMeds": "投薬管理",
     "actionLabs": "検査結果",
+    "records": "記録",
     "actionDelete": "削除",
     "detailTitle": "{{name}}さんの詳細",
     "dischargedFull": "退所済み",
@@ -313,5 +314,29 @@
     "deleteError": "削除に失敗しました",
     "deleteConfirmTitle": "検査結果の削除確認",
     "deleteConfirmMsg": "{{date}}の検査結果（{{name}}さん）を削除しますか？"
+  },
+  "lab": {
+    "WBC": "白血球数 (WBC)",
+    "RBC": "赤血球数 (RBC)",
+    "Hb": "ヘモグロビン (Hb)",
+    "Plt": "血小板数 (Plt)",
+    "TP": "総蛋白 (TP)",
+    "Alb": "アルブミン (Alb)",
+    "AST": "AST",
+    "ALT": "ALT",
+    "GGT": "γ-GTP",
+    "TBil": "総ビリルビン (T-Bil)",
+    "BUN": "尿素窒素 (BUN)",
+    "Cr": "クレアチニン (Cr)",
+    "eGFR": "eGFR",
+    "Na": "ナトリウム (Na)",
+    "K": "カリウム (K)",
+    "Cl": "クロール (Cl)",
+    "CRP": "CRP",
+    "Glu": "血糖 (Glu)",
+    "HbA1c": "HbA1c",
+    "LDL": "LDLコレステロール",
+    "HDL": "HDLコレステロール",
+    "TG": "中性脂肪 (TG)"
   }
 }

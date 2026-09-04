@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { DocumentChartBarIcon, PlusIcon, PencilIcon, PencilSquareIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, PlusIcon, PencilIcon, PencilSquareIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
@@ -136,6 +136,8 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
   if (!open) return null;
 
   const calculateAge = (birthDate: Date): number => dayjs().diff(dayjs(birthDate), 'year');
+  // 検査項目名は code から i18n 解決（保存済みの日本語名をフォールバックに）
+  const labName = (code: string, fallback: string) => t(`lab.${code}`, { defaultValue: fallback });
 
   return (
     <>
@@ -144,7 +146,7 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
           <ModalHeader
             title={t('labResult.title', { name: resident.name })}
             subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
-            icon={DocumentChartBarIcon}
+            icon={ChartBarIcon}
             onClose={onClose}
           />
 
@@ -189,16 +191,16 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
                     <div className="flex justify-between items-start gap-3">
                       <div className="min-w-0">
                         <div className="text-sm font-medium text-blue-600">{dayjs(lab.collectedAt).format('YYYY/MM/DD HH:mm')}</div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-1 mt-2">
                           {lab.items.map((it) => {
                             const abn = isLabAbnormal(it.value, it.refLow, it.refHigh);
                             return (
-                              <span key={it.code} className="text-sm whitespace-nowrap">
-                                <span className="text-gray-500">{it.name}</span>{' '}
-                                <span className={abn ? 'text-red-600 font-semibold' : 'text-gray-900'}>
+                              <div key={it.code} className="flex items-baseline justify-between gap-2 border-b border-gray-100 py-0.5">
+                                <span className="text-xs text-gray-500 truncate">{labName(it.code, it.name)}</span>
+                                <span className={`text-sm whitespace-nowrap ${abn ? 'text-red-600 font-semibold' : 'text-gray-900'}`}>
                                   {it.value}{it.unit ? ` ${it.unit}` : ''}
                                 </span>
-                              </span>
+                              </div>
                             );
                           })}
                         </div>
@@ -276,7 +278,7 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
                   <tbody className="divide-y divide-gray-100">
                     {form.items.map((it) => (
                       <tr key={it.code}>
-                        <td className="px-3 py-1.5 text-gray-800">{it.name}</td>
+                        <td className="px-3 py-1.5 text-gray-800">{labName(it.code, it.name)}</td>
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1">
                             <input

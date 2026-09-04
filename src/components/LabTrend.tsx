@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { LAB_ANALYTES, isLabAbnormal } from '../constants/labReference';
 import type { LabResult } from '../types';
@@ -9,6 +10,7 @@ const LINE_COLOR = '#2f5b95';
 const ABNORMAL_COLOR = '#a83d35';
 
 const LabTrend = ({ labs }: { labs: LabResult[] }) => {
+  const { t } = useTranslation();
   const chrono = [...labs].reverse(); // 古い→新しい
   const present = LAB_ANALYTES.filter((a) => chrono.some((l) => l.items.some((it) => it.code === a.code)));
 
@@ -22,7 +24,7 @@ const LabTrend = ({ labs }: { labs: LabResult[] }) => {
         return (
           <div key={a.code} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-baseline gap-2 mb-2">
-              <h4 className="text-sm font-semibold text-gray-800">{a.name}</h4>
+              <h4 className="text-sm font-semibold text-gray-800">{t(`lab.${a.code}`, { defaultValue: a.name })}</h4>
               {a.unit && <span className="text-xs text-gray-400">{a.unit}</span>}
             </div>
             <ResponsiveContainer width="100%" height={160}>

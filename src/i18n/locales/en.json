@@ -198,6 +198,7 @@
     "actionVitals": "Vitals",
     "actionMeds": "Medications",
     "actionLabs": "Lab results",
+    "records": "Records",
     "actionDelete": "Delete",
     "detailTitle": "{{name}} — details",
     "dischargedFull": "Discharged",
@@ -313,5 +314,29 @@
     "deleteError": "Failed to delete",
     "deleteConfirmTitle": "Delete lab result",
     "deleteConfirmMsg": "Delete the lab result from {{date}} for {{name}}?"
+  },
+  "lab": {
+    "WBC": "WBC",
+    "RBC": "RBC",
+    "Hb": "Hemoglobin (Hb)",
+    "Plt": "Platelets (Plt)",
+    "TP": "Total protein (TP)",
+    "Alb": "Albumin (Alb)",
+    "AST": "AST",
+    "ALT": "ALT",
+    "GGT": "γ-GTP",
+    "TBil": "Total bilirubin (T-Bil)",
+    "BUN": "BUN",
+    "Cr": "Creatinine (Cr)",
+    "eGFR": "eGFR",
+    "Na": "Sodium (Na)",
+    "K": "Potassium (K)",
+    "Cl": "Chloride (Cl)",
+    "CRP": "CRP",
+    "Glu": "Glucose (Glu)",
+    "HbA1c": "HbA1c",
+    "LDL": "LDL cholesterol",
+    "HDL": "HDL cholesterol",
+    "TG": "Triglycerides (TG)"
   }
 }
