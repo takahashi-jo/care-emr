@@ -123,7 +123,7 @@ function buildResident() {
     birthDate: Timestamp.fromDate(new Date(birthYear, 3, 15)),
     roomNumber: `${1 + Math.floor(Math.random() * 3)}0${(1 + Math.floor(Math.random() * 20)).toString().padStart(2, '0')}`,
     admissionDate: Timestamp.fromDate(admission),
-    dischargeDate: null,
+    dischargeDate: Math.random() < 0.15 ? Timestamp.fromDate(new Date(2025, Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 27))) : null,
     medicalHistory: pickN(histories, 1 + Math.floor(Math.random() * 3)).join('、'),
     allergies: Math.random() < 0.3 ? pick(['ペニシリン', 'そば', '卵', 'ヨード']) : '',
     careLevel: 1 + Math.floor(Math.random() * 5),

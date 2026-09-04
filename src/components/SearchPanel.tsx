@@ -628,9 +628,11 @@ const SearchPanel = () => {
                 </div>
               </div>
               {viewingResident.allergies && (
-                <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <label className="block text-sm font-medium text-red-700 mb-1">アレルギー</label>
-                  <p className="text-red-800 font-medium">{viewingResident.allergies}</p>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-500 mb-1">アレルギー</label>
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
+                    {viewingResident.allergies}
+                  </span>
                 </div>
               )}
               {viewingResident.medicalHistory && (
