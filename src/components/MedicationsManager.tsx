@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { BeakerIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { medicationService } from '../services/firestore';
@@ -55,6 +56,16 @@ const FREQUENCY_PRESETS = [
 
 const ROUTES: MedicationRoute[] = ['経口', '外用', '貼付', '注射', 'その他'];
 
+// 経路・種別の表示用 i18n キー（値は日本語のまま保存し、表示だけ翻訳）
+const ROUTE_KEY: Record<string, string> = {
+  '経口': 'medication.routeOral',
+  '外用': 'medication.routeTopical',
+  '貼付': 'medication.routePatch',
+  '注射': 'medication.routeInjection',
+  'その他': 'medication.routeOther',
+};
+const TYPE_KEY = (ty: string) => (ty === '頓用' ? 'medication.typeAsNeeded' : 'medication.typeRegular');
+
 const emptyForm = (): MedicationFormData => ({
   name: '',
   dosage: '',
@@ -79,6 +90,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     medication: null,
   });
   const { user } = useAuth();
+  const { t } = useTranslation();
   const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
@@ -91,7 +103,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
       setLoading(true);
       setMedications(await medicationService.getByResidentId(resident.id));
     } catch {
-      showSnackbar('投薬情報の読み込みに失敗しました', 'error');
+      showSnackbar(t('medication.loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -130,15 +142,15 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     try {
       if (editing) {
         await medicationService.update(resident.id, editing.id, form, author);
-        showSnackbar('投薬を更新しました', 'success');
+        showSnackbar(t('medication.updatedOk'), 'success');
       } else {
         await medicationService.create(resident.id, form, author);
-        showSnackbar('投薬を追加しました', 'success');
+        showSnackbar(t('medication.addedOk'), 'success');
       }
       await loadMedications();
       setFormOpen(false);
     } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : '保存に失敗しました', 'error');
+      showSnackbar(error instanceof Error ? error.message : t('medication.saveError'), 'error');
     } finally {
       setFormLoading(false);
     }
@@ -150,14 +162,14 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     try {
       if (kind === 'stop') {
         await medicationService.stop(resident.id, medication.id, dayjs().format('YYYY-MM-DD'), author);
-        showSnackbar('投薬を中止にしました', 'success');
+        showSnackbar(t('medication.stoppedOk'), 'success');
       } else {
         await medicationService.delete(resident.id, medication.id);
-        showSnackbar('投薬を削除しました', 'success');
+        showSnackbar(t('medication.deletedOk'), 'success');
       }
       await loadMedications();
     } catch {
-      showSnackbar(kind === 'stop' ? '中止に失敗しました' : '削除に失敗しました', 'error');
+      showSnackbar(kind === 'stop' ? t('medication.stopError') : t('medication.deleteError'), 'error');
     } finally {
       setConfirm({ kind: null, medication: null });
     }
@@ -172,8 +184,8 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
           <ModalHeader
-            title={`${resident.name}さんの投薬`}
-            subtitle={`${resident.gender} • ${dayjs().diff(dayjs(resident.birthDate), 'year')}歳 • 部屋${resident.roomNumber}`}
+            title={t('medication.title', { name: resident.name })}
+            subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: dayjs().diff(dayjs(resident.birthDate), 'year'), room: resident.roomNumber })}
             icon={BeakerIcon}
             onClose={onClose}
           />
@@ -182,15 +194,15 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
           <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-gray-800">投薬一覧</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">継続中 {activeCount} / 全 {medications.length}</span>
+                <h3 className="text-xl font-semibold text-gray-800">{t('medication.listTitle')}</h3>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('medication.count', { active: activeCount, total: medications.length })}</span>
               </div>
               <button
                 onClick={handleAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
               >
                 <PlusIcon className="w-5 h-5" />
-                投薬を追加
+                {t('medication.add')}
               </button>
             </div>
 
@@ -199,7 +211,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
               </div>
             ) : medications.length === 0 ? (
-              <EmptyState title="投薬が登録されていません" hint="「投薬を追加」から登録してください" />
+              <EmptyState title={t('medication.empty')} hint={t('medication.emptyHint')} />
             ) : (
               <div className="space-y-3">
                 {medications.map((med) => {
@@ -215,26 +227,26 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                             <span className="font-semibold text-gray-900">{med.name}</span>
                             {med.dosage && <span className="text-sm text-gray-600">{med.dosage}</span>}
                             <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${med.type === '頓用' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                              {med.type}
+                              {t(TYPE_KEY(med.type))}
                             </span>
                             <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                              {med.route}
+                              {t(ROUTE_KEY[med.route] ?? 'medication.routeOther')}
                             </span>
                             {stopped ? (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">中止</span>
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">{t('medication.stopped')}</span>
                             ) : (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">継続中</span>
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{t('medication.active')}</span>
                             )}
                           </div>
                           <div className="text-sm text-gray-700 mt-1">{med.frequency}</div>
                           <div className="text-xs text-gray-500 mt-1">
-                            開始 {dayjs(med.startDate).format('YYYY/MM/DD')}
-                            {med.endDate && ` 〜 中止 ${dayjs(med.endDate).format('YYYY/MM/DD')}`}
+                            {t('medication.startLabel', { date: dayjs(med.startDate).format('YYYY/MM/DD') })}
+                            {med.endDate && ` / ${t('medication.stopLabel', { date: dayjs(med.endDate).format('YYYY/MM/DD') })}`}
                           </div>
-                          {med.notes && <div className="text-xs text-gray-600 mt-1">備考: {med.notes}</div>}
+                          {med.notes && <div className="text-xs text-gray-600 mt-1">{t('medication.notesInline', { text: med.notes })}</div>}
                           <div className="text-xs text-gray-400 mt-1">
-                            作成: {med.createdBy?.name ?? '-'} ({dayjs(med.createdAt).format('YYYY/MM/DD HH:mm')})
-                            {med.updatedBy && <> / 更新: {med.updatedBy.name} ({dayjs(med.updatedAt).format('YYYY/MM/DD HH:mm')})</>}
+                            {t('common.createdBy', { name: med.createdBy?.name ?? '-', date: dayjs(med.createdAt).format('YYYY/MM/DD HH:mm') })}
+                            {med.updatedBy && <> / {t('common.updatedBy', { name: med.updatedBy.name, date: dayjs(med.updatedAt).format('YYYY/MM/DD HH:mm') })}</>}
                           </div>
                         </div>
                         <div className="flex gap-1 shrink-0">
@@ -242,22 +254,22 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                             <button
                               onClick={() => setConfirm({ kind: 'stop', medication: med })}
                               className="px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 border border-amber-300 rounded transition-colors"
-                              title="中止"
+                              title={t('medication.stopAction')}
                             >
-                              中止
+                              {t('medication.stopAction')}
                             </button>
                           )}
                           <button
                             onClick={() => handleEdit(med)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="編集"
+                            title={t('common.edit')}
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setConfirm({ kind: 'delete', medication: med })}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="削除"
+                            title={t('medication.deleteAction')}
                           >
                             <TrashIcon className="w-4 h-4" />
                           </button>
@@ -279,42 +291,42 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editing ? '投薬の編集' : '投薬の追加'}
+                {editing ? t('medication.editTitle') : t('medication.addTitle')}
               </h3>
             </div>
 
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">薬剤名 <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.drugName')} <span className="text-red-500">*</span></label>
                 <DrugNameAutocomplete
                   value={form.name}
                   onChange={(name, item) => setForm(prev => ({ ...prev, name, yjCode: item?.yjCode, hotCode: item?.hotCode }))}
-                  placeholder="例：アムロジピン（入力すると候補が出ます）"
+                  placeholder={t('medication.drugPh')}
                 />
                 {form.yjCode && (
-                  <p className="text-xs text-gray-400 mt-1">YJコード: {form.yjCode}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('medication.yjCode', { code: form.yjCode })}</p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">1回量</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.dosage')}</label>
                   <input
                     type="text"
                     value={form.dosage}
                     onChange={(e) => setForm(prev => ({ ...prev, dosage: e.target.value }))}
-                    placeholder="例：1錠 / 5mg"
+                    placeholder={t('medication.dosagePh')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">用法</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.frequency')}</label>
                   <input
                     type="text"
                     list="frequency-presets"
                     value={form.frequency}
                     onChange={(e) => setForm(prev => ({ ...prev, frequency: e.target.value }))}
-                    placeholder="例：1日2回 朝夕食後"
+                    placeholder={t('medication.frequencyPh')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                   <datalist id="frequency-presets">
@@ -325,31 +337,31 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">経路</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.route')}</label>
                   <select
                     value={form.route}
                     onChange={(e) => setForm(prev => ({ ...prev, route: e.target.value as MedicationRoute }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   >
-                    {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
+                    {ROUTES.map(r => <option key={r} value={r}>{t(ROUTE_KEY[r] ?? 'medication.routeOther')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">種別</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.type')}</label>
                   <select
                     value={form.type}
                     onChange={(e) => setForm(prev => ({ ...prev, type: e.target.value as MedicationType }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   >
-                    <option value="定期">定期</option>
-                    <option value="頓用">頓用</option>
+                    <option value="定期">{t('medication.typeRegular')}</option>
+                    <option value="頓用">{t('medication.typeAsNeeded')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">開始日 <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.startDate')} <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     value={form.startDate}
@@ -358,7 +370,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">中止日（継続中は空欄）</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.endDate')}</label>
                   <input
                     type="date"
                     value={form.endDate}
@@ -369,11 +381,11 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('medication.notes')}</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="頓用の条件など（例：38.5℃以上で使用）"
+                  placeholder={t('medication.notesPh')}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-vertical"
                 />
@@ -386,14 +398,14 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                 disabled={formLoading}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={formLoading || !form.name.trim()}
                 className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {formLoading ? '保存中...' : '保存'}
+                {formLoading ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>
@@ -406,14 +418,14 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
       {/* Confirm dialog for stop / delete */}
       <ConfirmDialog
         isOpen={confirm.kind !== null}
-        title={confirm.kind === 'stop' ? '投薬の中止' : '投薬の削除'}
+        title={confirm.kind === 'stop' ? t('medication.stopConfirmTitle') : t('medication.deleteConfirmTitle')}
         message={
           confirm.kind === 'stop'
-            ? `「${confirm.medication?.name}」を本日付で中止にしますか？（記録は残ります）`
-            : `「${confirm.medication?.name}」を削除しますか？入力誤りの取り消し用です。処方の中止は「中止」を使ってください。`
+            ? t('medication.stopConfirmMsg', { name: confirm.medication?.name })
+            : t('medication.deleteConfirmMsg', { name: confirm.medication?.name })
         }
-        confirmButtonText={confirm.kind === 'stop' ? '中止する' : '削除する'}
-        cancelButtonText="キャンセル"
+        confirmButtonText={confirm.kind === 'stop' ? t('medication.stopConfirm') : t('common.delete')}
+        cancelButtonText={t('common.cancel')}
         confirmButtonVariant="danger"
         onConfirm={confirmAction}
         onCancel={() => setConfirm({ kind: null, medication: null })}

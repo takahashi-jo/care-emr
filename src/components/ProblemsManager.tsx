@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { ClipboardDocumentListIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { problemService } from '../services/firestore';
@@ -27,6 +28,7 @@ const emptyForm = (nextNumber: number): ProblemFormData => ({
 });
 
 const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
+  const { t } = useTranslation();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -49,7 +51,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
       setLoading(true);
       setProblems(await problemService.getByResidentId(resident.id));
     } catch {
-      showSnackbar('プロブレムの読み込みに失敗しました', 'error');
+      showSnackbar(t('problem.loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -87,15 +89,15 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
     try {
       if (editing) {
         await problemService.update(resident.id, editing.id, form, author);
-        showSnackbar('プロブレムを更新しました', 'success');
+        showSnackbar(t('problem.updatedOk'), 'success');
       } else {
         await problemService.create(resident.id, form, author);
-        showSnackbar('プロブレムを追加しました', 'success');
+        showSnackbar(t('problem.addedOk'), 'success');
       }
       await load();
       setFormOpen(false);
     } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : '保存に失敗しました', 'error');
+      showSnackbar(error instanceof Error ? error.message : t('problem.saveError'), 'error');
     } finally {
       setFormLoading(false);
     }
@@ -107,14 +109,14 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
     try {
       if (kind === 'resolve') {
         await problemService.resolve(resident.id, problem.id, dayjs().format('YYYY-MM-DD'), author);
-        showSnackbar('プロブレムを消失にしました', 'success');
+        showSnackbar(t('problem.resolvedOk'), 'success');
       } else {
         await problemService.delete(resident.id, problem.id, author);
-        showSnackbar('プロブレムを削除しました（記録は保持されます）', 'success');
+        showSnackbar(t('problem.deletedOk'), 'success');
       }
       await load();
     } catch {
-      showSnackbar(kind === 'resolve' ? '消失への変更に失敗しました' : '削除に失敗しました', 'error');
+      showSnackbar(kind === 'resolve' ? t('problem.resolveError') : t('problem.deleteError'), 'error');
     } finally {
       setConfirm({ kind: null, problem: null });
     }
@@ -130,8 +132,8 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
           <ModalHeader
-            title={`${resident.name}さんのプロブレムリスト`}
-            subtitle={`${resident.gender} • ${calculateAge(resident.birthDate)}歳 • 部屋${resident.roomNumber}`}
+            title={t('problem.title', { name: resident.name })}
+            subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
             icon={ClipboardDocumentListIcon}
             onClose={onClose}
           />
@@ -139,15 +141,15 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
           <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-gray-800">プロブレム一覧</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">現行 {activeCount} / 全 {problems.length}</span>
+                <h3 className="text-xl font-semibold text-gray-800">{t('problem.listTitle')}</h3>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('problem.count', { active: activeCount, total: problems.length })}</span>
               </div>
               <button
                 onClick={handleAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
               >
                 <PlusIcon className="w-5 h-5" />
-                問題を追加
+                {t('problem.add')}
               </button>
             </div>
 
@@ -156,7 +158,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               </div>
             ) : problems.length === 0 ? (
-              <EmptyState title="プロブレムが登録されていません" hint="「問題を追加」から登録してください" />
+              <EmptyState title={t('problem.empty')} hint={t('problem.emptyHint')} />
             ) : (
               <div className="space-y-3">
                 {problems.map((p) => {
@@ -173,21 +175,21 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                             <span className="font-semibold text-gray-900">{p.title}</span>
                             {p.icd10 && <span className="text-xs text-gray-400">ICD-10: {p.icd10}</span>}
                             {resolved ? (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">消失</span>
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">{t('problem.statusResolved')}</span>
                             ) : (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">現行</span>
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{t('problem.statusActive')}</span>
                             )}
                           </div>
                           {(p.onsetDate || p.resolvedDate) && (
                             <div className="text-xs text-gray-500 mt-1">
-                              {p.onsetDate && `発症・認知 ${dayjs(p.onsetDate).format('YYYY/MM/DD')}`}
-                              {p.resolvedDate && ` / 消失 ${dayjs(p.resolvedDate).format('YYYY/MM/DD')}`}
+                              {p.onsetDate && t('problem.onsetLabel', { date: dayjs(p.onsetDate).format('YYYY/MM/DD') })}
+                              {p.resolvedDate && <> / {t('problem.resolvedLabel', { date: dayjs(p.resolvedDate).format('YYYY/MM/DD') })}</>}
                             </div>
                           )}
-                          {p.notes && <div className="text-xs text-gray-600 mt-1">備考: {p.notes}</div>}
+                          {p.notes && <div className="text-xs text-gray-600 mt-1">{t('problem.notesInline', { text: p.notes })}</div>}
                           <div className="text-xs text-gray-400 mt-1">
-                            作成: {p.createdBy?.name ?? '-'} ({dayjs(p.createdAt).format('YYYY/MM/DD HH:mm')})
-                            {p.updatedBy && <> / 更新: {p.updatedBy.name} ({dayjs(p.updatedAt).format('YYYY/MM/DD HH:mm')})</>}
+                            {t('common.createdBy', { name: p.createdBy?.name ?? '-', date: dayjs(p.createdAt).format('YYYY/MM/DD HH:mm') })}
+                            {p.updatedBy && <> / {t('common.updatedBy', { name: p.updatedBy.name, date: dayjs(p.updatedAt).format('YYYY/MM/DD HH:mm') })}</>}
                           </div>
                         </div>
                         <div className="flex gap-1 shrink-0">
@@ -195,22 +197,22 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                             <button
                               onClick={() => setConfirm({ kind: 'resolve', problem: p })}
                               className="px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 border border-gray-300 rounded transition-colors"
-                              title="消失にする"
+                              title={t('problem.resolve')}
                             >
-                              消失にする
+                              {t('problem.resolve')}
                             </button>
                           )}
                           <button
                             onClick={() => handleEdit(p)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="編集"
+                            title={t('common.edit')}
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setConfirm({ kind: 'delete', problem: p })}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="削除"
+                            title={t('common.delete')}
                           >
                             <TrashIcon className="w-4 h-4" />
                           </button>
@@ -232,14 +234,14 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editing ? '問題の編集' : '問題の追加'}
+                {editing ? t('problem.editTitle') : t('problem.addTitle')}
               </h3>
             </div>
 
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">問題番号</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.number')}</label>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -249,11 +251,11 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                   />
                 </div>
                 <div className="sm:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">問題名（病名） <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.name')} <span className="text-red-500">*</span></label>
                   <DiseaseNameAutocomplete
                     value={form.title}
                     onChange={(title, item) => setForm(prev => ({ ...prev, title, icd10: item?.icd10 }))}
-                    placeholder="例：高血圧（入力すると候補が出ます）"
+                    placeholder={t('problem.namePh')}
                   />
                   {form.icd10 && (
                     <p className="text-xs text-gray-400 mt-1">ICD-10: {form.icd10}</p>
@@ -263,18 +265,18 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">状態</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.state')}</label>
                   <select
                     value={form.status}
                     onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value as ProblemStatus }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
-                    <option value="現行">現行</option>
-                    <option value="消失">消失</option>
+                    <option value="現行">{t('problem.statusActive')}</option>
+                    <option value="消失">{t('problem.statusResolved')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">発症・認知日</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.onset')}</label>
                   <input
                     type="date"
                     value={form.onsetDate}
@@ -286,7 +288,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
 
               {form.status === '消失' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">消失日</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.resolvedDate')}</label>
                   <input
                     type="date"
                     value={form.resolvedDate}
@@ -297,11 +299,11 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('problem.notesLabel')}</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="経過・補足など"
+                  placeholder={t('problem.notesPh')}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
                 />
@@ -314,14 +316,14 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                 disabled={formLoading}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={formLoading || !form.title.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {formLoading ? '保存中...' : '保存'}
+                {formLoading ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>
@@ -334,15 +336,15 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
       {/* 消失 / 削除の確認 */}
       <ConfirmDialog
         isOpen={confirm.kind !== null}
-        title={confirm.kind === 'resolve' ? '問題を消失にする' : '問題の削除'}
+        title={confirm.kind === 'resolve' ? t('problem.resolveConfirmTitle') : t('problem.deleteConfirmTitle')}
         message={
           confirm.kind === 'resolve'
-            ? `「#${confirm.problem?.number} ${confirm.problem?.title}」を本日付で消失にしますか？（記録は残ります）`
-            : `「#${confirm.problem?.number} ${confirm.problem?.title}」を削除しますか？入力誤りの取り消し用です。治癒・消失は「消失にする」を使ってください。`
+            ? t('problem.resolveConfirmMsg', { number: confirm.problem?.number, title: confirm.problem?.title })
+            : t('problem.deleteConfirmMsg', { number: confirm.problem?.number, title: confirm.problem?.title })
         }
-        note={confirm.kind === 'delete' ? '削除しても、法定保存・監査のため記録は残ります。一覧からは非表示になり、削除した人と日時が記録されます。' : undefined}
-        confirmButtonText={confirm.kind === 'resolve' ? '消失にする' : '削除する'}
-        cancelButtonText="キャンセル"
+        note={confirm.kind === 'delete' ? t('common.deleteNote') : undefined}
+        confirmButtonText={confirm.kind === 'resolve' ? t('problem.resolve') : t('common.delete')}
+        cancelButtonText={t('common.cancel')}
         confirmButtonVariant={confirm.kind === 'resolve' ? 'primary' : 'danger'}
         onConfirm={confirmAction}
         onCancel={() => setConfirm({ kind: null, problem: null })}

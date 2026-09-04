@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { PencilIcon, PencilSquareIcon, ClockIcon, XMarkIcon, DocumentTextIcon, PlusIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -54,6 +55,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
   });
 
   const { user } = useAuth();
+  const { t } = useTranslation();
   const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const loadMedicalRecords = useCallback(async () => {
@@ -63,7 +65,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
       setMedicalRecords(records);
       setCurrentPage(1);
     } catch {
-      showSnackbar('診療録の読み込みに失敗しました', 'error');
+      showSnackbar(t('medicalRecord.loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -118,10 +120,10 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
     try {
       await medicalRecordService.delete(deleteConfirmDialog.recordId, author);
       await loadMedicalRecords();
-      showSnackbar('診療録を削除しました（記録は保持されます）', 'success');
+      showSnackbar(t('medicalRecord.deletedOk'), 'success');
       setDeleteConfirmDialog({ open: false, recordId: '', recordDate: '' });
     } catch {
-      showSnackbar('削除に失敗しました', 'error');
+      showSnackbar(t('medicalRecord.deleteError'), 'error');
     }
   };
 
@@ -137,15 +139,15 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
     try {
       if (editingRecord) {
         await medicalRecordService.update(editingRecord.id, recordForm, author);
-        showSnackbar('診療録を更新しました', 'success');
+        showSnackbar(t('medicalRecord.updatedOk'), 'success');
       } else {
         await medicalRecordService.create(resident.id, recordForm, author);
-        showSnackbar('診療録を登録しました', 'success');
+        showSnackbar(t('medicalRecord.createdOk'), 'success');
       }
       await loadMedicalRecords();
       setRecordDialogOpen(false);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '保存に失敗しました';
+      const errorMessage = error instanceof Error ? error.message : t('medicalRecord.saveError');
       showSnackbar(errorMessage, 'error');
     } finally {
       setFormLoading(false);
@@ -179,8 +181,8 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             <ModalHeader
-              title={`${resident.name}さんの診療録`}
-              subtitle={`${resident.gender} • ${calculateAge(resident.birthDate)}歳 • 部屋${resident.roomNumber}`}
+              title={t('medicalRecord.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
               icon={DocumentTextIcon}
               onClose={onClose}
             />
@@ -190,10 +192,10 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
                   <h3 className="text-xl font-semibold text-gray-800">
-                    診療記録一覧
+                    {t('medicalRecord.listTitle')}
                   </h3>
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                    {medicalRecords.length}件
+                    {t('medicalRecord.count', { count: medicalRecords.length })}
                   </span>
                 </div>
                 <button
@@ -201,7 +203,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
                 >
                   <PlusIcon className="w-5 h-5" />
-                  新規記録
+                  {t('common.newRecord')}
                 </button>
               </div>
 
@@ -209,20 +211,20 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 <div className="flex justify-center py-12">
                   <div className="flex items-center gap-3">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="text-gray-600">読み込み中...</span>
+                    <span className="text-gray-600">{t('app.loading')}</span>
                   </div>
                 </div>
               ) : medicalRecords.length === 0 ? (
-                <EmptyState title="診療録がありません" hint="「新規記録」から登録してください" />
+                <EmptyState title={t('medicalRecord.empty')} hint={t('medicalRecord.emptyHint')} />
               ) : (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">日付</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">記録</th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-32">操作</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('medicalRecord.colDate')}</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('medicalRecord.colRecord')}</th>
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-32">{t('medicalRecord.colActions')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -241,9 +243,9 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                                 {record.record}
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
-                                作成: {record.createdBy?.name ?? '-'} ({dayjs(record.createdAt).format('YYYY/MM/DD HH:mm')})
+                                {t('common.createdBy', { name: record.createdBy?.name ?? '-', date: dayjs(record.createdAt).format('YYYY/MM/DD HH:mm') })}
                                 {record.updatedBy && (
-                                  <> / 更新: {record.updatedBy.name} ({dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm')})</>
+                                  <> / {t('common.updatedBy', { name: record.updatedBy.name, date: dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm') })}</>
                                 )}
                               </div>
                             </td>
@@ -252,21 +254,21 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                                 <button
                                   onClick={() => handleViewRevisions(record)}
                                   className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                                  title="訂正履歴"
+                                  title={t('medicalRecord.revisionsTip')}
                                 >
                                   <ClockIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEditRecord(record)}
                                   className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors duration-200"
-                                  title="編集"
+                                  title={t('common.edit')}
                                 >
                                   <PencilSquareIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteRecord(record)}
                                   className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors duration-200"
-                                  title="削除"
+                                  title={t('medicalRecord.deleteTip')}
                                 >
                                   <TrashIcon className="w-4 h-4" />
                                 </button>
@@ -286,14 +288,14 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                           disabled={currentPage === 1}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          最初
+                          {t('common.first')}
                         </button>
                         <button
                           onClick={() => handlePageChange(null, currentPage - 1)}
                           disabled={currentPage === 1}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          前へ
+                          {t('common.prev')}
                         </button>
                         <span className="px-4 py-2 text-sm font-medium text-gray-700">
                           {currentPage} / {totalPages}
@@ -303,14 +305,14 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                           disabled={currentPage === totalPages}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          次へ
+                          {t('common.next')}
                         </button>
                         <button
                           onClick={() => handlePageChange(null, totalPages)}
                           disabled={currentPage === totalPages}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          最後
+                          {t('common.last')}
                         </button>
                       </div>
                     </div>
@@ -330,7 +332,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editingRecord ? '診療録編集' : '新規診療録'}
+                {editingRecord ? t('medicalRecord.dialogEdit') : t('medicalRecord.dialogNew')}
               </h3>
             </div>
 
@@ -338,7 +340,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
             <div className="p-6 space-y-6 max-h-[calc(90vh-140px)] overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  診療日
+                  {t('medicalRecord.dateLabel')}
                 </label>
                 <input
                   type="date"
@@ -351,12 +353,12 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  診療記録
+                  {t('medicalRecord.recordLabel')}
                 </label>
                 <textarea
                   value={recordForm.record}
                   onChange={(e) => setRecordForm(prev => ({ ...prev, record: e.target.value }))}
-                  placeholder="診療記録を詳しく入力してください..."
+                  placeholder={t('medicalRecord.recordPh')}
                   required
                   rows={8}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
@@ -372,7 +374,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <XMarkIcon className="w-4 h-4" />
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleRecordSubmit}
@@ -380,7 +382,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckIcon className="w-4 h-4" />
-                {formLoading ? '保存中...' : '保存'}
+                {formLoading ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>
@@ -393,10 +395,10 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteConfirmDialog.open}
-        title="診療録の削除確認"
-        message={`${deleteConfirmDialog.recordDate}の診療録（${resident.name}さん）を削除しますか？`}
-        note="削除しても、法定保存・監査のため記録と訂正履歴は残ります。一覧からは非表示になり、削除した人と日時が記録されます。"
-        confirmButtonText="削除する"
+        title={t('medicalRecord.deleteConfirmTitle')}
+        message={t('medicalRecord.deleteConfirmMsg', { date: deleteConfirmDialog.recordDate, name: resident.name })}
+        note={t('medicalRecord.deleteNote')}
+        confirmButtonText={t('common.delete')}
         confirmButtonVariant="danger"
         onConfirm={confirmDeleteRecord}
         onCancel={() => setDeleteConfirmDialog({ open: false, recordId: '', recordDate: '' })}
@@ -407,35 +409,35 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">訂正履歴</h3>
-              <button onClick={() => setRevisionView({ open: false, record: null, revisions: [] })} className="text-gray-400 hover:text-gray-600" aria-label="閉じる">
+              <h3 className="text-lg font-semibold text-gray-900">{t('medicalRecord.revisionsTitle')}</h3>
+              <button onClick={() => setRevisionView({ open: false, record: null, revisions: [] })} className="text-gray-400 hover:text-gray-600" aria-label={t('common.close')}>
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[calc(85vh-120px)] space-y-4">
               <div className="border border-blue-200 bg-blue-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-blue-700 mb-1">現在の内容</div>
+                <div className="text-xs font-medium text-blue-700 mb-1">{t('medicalRecord.current')}</div>
                 <div className="text-sm text-gray-900 whitespace-pre-wrap">{revisionView.record?.record}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  更新: {revisionView.record?.updatedBy?.name ?? '-'} ({revisionView.record ? dayjs(revisionView.record.updatedAt).format('YYYY/MM/DD HH:mm') : ''})
+                  {t('common.updatedBy', { name: revisionView.record?.updatedBy?.name ?? '-', date: revisionView.record ? dayjs(revisionView.record.updatedAt).format('YYYY/MM/DD HH:mm') : '' })}
                 </div>
               </div>
               {revisionView.revisions.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">編集前の履歴はありません（作成後まだ修正されていません）。</p>
+                <p className="text-sm text-gray-500 text-center py-4">{t('medicalRecord.noRevisions')}</p>
               ) : (
                 revisionView.revisions.map((rev, i) => (
                   <div key={rev.id} className="border border-gray-200 rounded-lg p-3">
-                    <div className="text-xs font-medium text-gray-500 mb-1">編集前 #{revisionView.revisions.length - i}</div>
+                    <div className="text-xs font-medium text-gray-500 mb-1">{t('medicalRecord.beforeEdit', { n: revisionView.revisions.length - i })}</div>
                     <div className="text-sm text-gray-800 whitespace-pre-wrap">{rev.record}</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      記録者: {rev.editedBy?.name ?? '-'} ({dayjs(rev.editedAt).format('YYYY/MM/DD HH:mm')})
+                      {t('medicalRecord.recordedBy', { name: rev.editedBy?.name ?? '-', date: dayjs(rev.editedAt).format('YYYY/MM/DD HH:mm') })}
                     </div>
                   </div>
                 ))
               )}
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button onClick={() => setRevisionView({ open: false, record: null, revisions: [] })} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">閉じる</button>
+              <button onClick={() => setRevisionView({ open: false, record: null, revisions: [] })} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">{t('common.close')}</button>
             </div>
           </div>
         </div>

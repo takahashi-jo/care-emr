@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, HeartIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -19,6 +20,7 @@ import ResidentEditForm from './ResidentEditForm';
 type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
 
 const SearchPanel = ({ active = true }: { active?: boolean }) => {
+  const { t } = useTranslation();
   const [searchType, setSearchType] = useState<SearchType>('name');
   const [nameSearch, setNameSearch] = useState('');
   const [roomSearch, setRoomSearch] = useState('');
@@ -44,7 +46,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const validateRoomNumber = (roomNumber: string): string => {
     if (!roomNumber) return '';
     if (!/^[0-9]+$/.test(roomNumber)) {
-      return '部屋番号は半角数字のみで入力してください';
+      return t('resident.roomError');
     }
     return '';
   };
@@ -82,7 +84,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
       case 'name': return nameSearch;
       case 'room': return roomSearch;
       case 'medication': return medicationSearch;
-      case 'careLevel': return careLevelSearch ? `要介護${careLevelSearch}` : '';
+      case 'careLevel': return careLevelSearch ? t('resident.careLevelOption', { n: careLevelSearch }) : '';
       default: return '';
     }
   };
@@ -266,7 +268,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
 
       setSearchResults(prev => prev.filter(r => r.id !== resident.id));
       setAllResidents(prev => prev.filter(r => r.id !== resident.id));
-      showSnackbar(`${resident.name}さんの情報を削除しました`, 'success');
+      showSnackbar(t('roster.deletedOk', { name: resident.name }), 'success');
       setDeleteConfirmDialog({ open: false, resident: null });
 
       logger.userAction('resident_deleted_success', {
@@ -303,21 +305,21 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
         <div className="p-6">
           <div className="flex items-center gap-2 mb-6">
             <MagnifyingGlassIcon className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">入所者検索</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('roster.searchTitle')}</h2>
           </div>
 
           <div className="max-w-4xl">
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">検索種別</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('roster.searchType')}</label>
               <select
                 value={searchType}
                 onChange={(e) => handleSearchTypeChange(e.target.value as SearchType)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
               >
-                <option value="name">氏名</option>
-                <option value="room">部屋番号</option>
-                <option value="careLevel">要介護度</option>
-                <option value="medication">継続中の薬剤</option>
+                <option value="name">{t('resident.name')}</option>
+                <option value="room">{t('resident.room')}</option>
+                <option value="careLevel">{t('resident.careLevel')}</option>
+                <option value="medication">{t('roster.medsColumn')}</option>
               </select>
             </div>
 
@@ -325,18 +327,18 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               {searchType === 'name' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    氏名またはフリガナ（前方一致検索）
+                    {t('roster.nameSearchLabel')}
                   </label>
                   <input
                     type="text"
                     value={nameSearch}
                     onChange={(e) => setNameSearch(convertSpacesToFullWidth(e.target.value))}
-                    placeholder="例: 田中, タナカ"
+                    placeholder={t('roster.namePh')}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   />
                   <p className="mt-1 text-sm text-gray-500">
-                    ※名前の最初から一致する文字で検索されます（スペースは自動的に全角に変換されます）
+                    {t('roster.nameNote')}
                   </p>
                 </div>
               )}
@@ -344,7 +346,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               {searchType === 'room' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    部屋番号
+                    {t('resident.room')}
                   </label>
                   <input
                     type="text"
@@ -354,7 +356,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                       setRoomSearch(value);
                       setRoomNumberError(validateRoomNumber(value));
                     }}
-                    placeholder="例: 101, 201"
+                    placeholder={t('roster.roomPh')}
                     onKeyDown={(e) => e.key === 'Enter' && !roomNumberError && handleSearch()}
                     className={`w-full px-3 py-2 border rounded-lg transition-colors duration-200 ${
                       roomNumberError
@@ -365,7 +367,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   <p className={`mt-1 text-sm ${
                     roomNumberError ? 'text-red-600' : 'text-gray-500'
                   }`}>
-                    {roomNumberError || "※半角数字のみで入力してください"}
+                    {roomNumberError || t('resident.roomNote')}
                   </p>
                 </div>
               )}
@@ -373,13 +375,13 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               {searchType === 'medication' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    薬剤名
+                    {t('roster.drugName')}
                   </label>
                   <input
                     type="text"
                     value={medicationSearch}
                     onChange={(e) => setMedicationSearch(e.target.value)}
-                    placeholder="例: アリセプト, メマリー"
+                    placeholder={t('roster.drugPh')}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   />
@@ -389,19 +391,19 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               {searchType === 'careLevel' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    要介護度
+                    {t('resident.careLevel')}
                   </label>
                   <select
                     value={careLevelSearch}
                     onChange={(e) => setCareLevelSearch(Number(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value={0}>選択してください</option>
-                    <option value={1}>要介護１</option>
-                    <option value={2}>要介護２</option>
-                    <option value={3}>要介護３</option>
-                    <option value={4}>要介護４</option>
-                    <option value={5}>要介護５</option>
+                    <option value={0}>{t('roster.selectPlaceholder')}</option>
+                    <option value={1}>{t('resident.careLevelOption', { n: 1 })}</option>
+                    <option value={2}>{t('resident.careLevelOption', { n: 2 })}</option>
+                    <option value={3}>{t('resident.careLevelOption', { n: 3 })}</option>
+                    <option value={4}>{t('resident.careLevelOption', { n: 4 })}</option>
+                    <option value={5}>{t('resident.careLevelOption', { n: 5 })}</option>
                   </select>
                 </div>
               )}
@@ -414,7 +416,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors duration-200 gap-2"
               >
                 <XMarkIcon className="w-4 h-4" />
-                クリア
+                {t('roster.clear')}
               </button>
               <button
                 onClick={handleSearch}
@@ -424,12 +426,12 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    検索中...
+                    {t('common.searching')}
                   </>
                 ) : (
                   <>
                     <MagnifyingGlassIcon className="w-4 h-4" />
-                    検索
+                    {t('roster.search')}
                   </>
                 )}
               </button>
@@ -444,34 +446,36 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                  {hasSearched ? '検索結果' : '入所者一覧'}
+                  {hasSearched ? t('roster.searchResults') : t('roster.listTitle')}
                   {refreshing && (
                     <span className="inline-flex items-center gap-1 text-xs font-normal text-gray-400">
                       <span className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></span>
-                      更新中
+                      {t('roster.refreshing')}
                     </span>
                   )}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {hasSearched && lastSearchValue ? `「${lastSearchValue}」の結果: ` : '入所中 '}{displayed.length}名
+                  {hasSearched && lastSearchValue
+                    ? t('roster.resultCount', { term: lastSearchValue, count: displayed.length })
+                    : t('roster.activeCount', { count: displayed.length })}
                 </p>
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <label className="flex items-center gap-1 text-gray-700">
-                  並べ替え
+                  {t('roster.sort')}
                   <select
                     value={sortKey}
                     onChange={(e) => setSortKey(e.target.value as 'room' | 'name' | 'careLevel')}
                     className="px-2 py-1 border border-gray-300 rounded-lg bg-white"
                   >
-                    <option value="room">部屋順</option>
-                    <option value="name">氏名順</option>
-                    <option value="careLevel">要介護度順</option>
+                    <option value="room">{t('roster.sortRoom')}</option>
+                    <option value="name">{t('roster.sortName')}</option>
+                    <option value="careLevel">{t('roster.sortCareLevel')}</option>
                   </select>
                 </label>
                 <label className="flex items-center gap-1.5 text-gray-700">
                   <input type="checkbox" checked={showDischarged} onChange={(e) => setShowDischarged(e.target.checked)} />
-                  退所者も表示
+                  {t('roster.showDischarged')}
                 </label>
               </div>
             </div>
@@ -484,20 +488,20 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               </div>
             ) : displayed.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-600 font-medium">{hasSearched ? '該当する入所者が見つかりませんでした' : '入所者がいません'}</p>
+                <p className="text-gray-600 font-medium">{hasSearched ? t('roster.noResults') : t('roster.noResidents')}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">氏名</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">性別</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">年齢</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">部屋</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">要介護度</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">継続中の薬剤</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[230px]">操作</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('resident.name')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('resident.gender')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('roster.colAge')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('roster.colRoom')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('resident.careLevel')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">{t('roster.medsColumn')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[230px]">{t('roster.colActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -507,7 +511,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                           <div className="flex items-center gap-2">
                             <span
                               className={`inline-block w-2 h-2 rounded-full shrink-0 ${resident.dischargeDate ? 'bg-gray-400' : 'bg-green-500'}`}
-                              title={resident.dischargeDate ? `退所済み（退所日: ${dayjs(resident.dischargeDate).format('YYYY年MM月DD日')}）` : '入所中'}
+                              title={resident.dischargeDate ? t('roster.dischargedTooltip', { date: dayjs(resident.dischargeDate).format('YYYY年MM月DD日') }) : t('roster.statusActive')}
                             />
                             <div className="leading-tight">
                               <div className="text-[11px] text-gray-500 leading-none">{resident.furigana}</div>
@@ -516,10 +520,10 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="text-gray-700">{resident.gender}</span>
+                          <span className="text-gray-700">{t(resident.gender === '男性' ? 'resident.male' : 'resident.female')}</span>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="text-gray-700">{calculateAge(resident.birthDate)}歳</span>
+                          <span className="text-gray-700">{t('roster.ageValue', { age: calculateAge(resident.birthDate) })}</span>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
@@ -528,7 +532,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                            要介護{resident.careLevel}
+                            {t('resident.careLevelOption', { n: resident.careLevel })}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -553,49 +557,49 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                             <button
                               onClick={() => handleViewResident(resident)}
                               className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-150"
-                              title="詳細表示"
+                              title={t('roster.actionDetail')}
                             >
                               <EyeIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewMedicalRecords(resident)}
                               className="p-1.5 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-150"
-                              title="診療録"
+                              title={t('roster.actionRecords')}
                             >
                               <DocumentTextIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewProblems(resident)}
                               className="p-1.5 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors duration-150"
-                              title="プロブレムリスト"
+                              title={t('roster.actionProblems')}
                             >
                               <ClipboardDocumentListIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewVitals(resident)}
                               className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors duration-150"
-                              title="バイタル"
+                              title={t('roster.actionVitals')}
                             >
                               <HeartIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewMedications(resident)}
                               className="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors duration-150"
-                              title="投薬管理"
+                              title={t('roster.actionMeds')}
                             >
                               <BeakerIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleEditResident(resident)}
                               className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors duration-150"
-                              title="編集"
+                              title={t('common.edit')}
                             >
                               <PencilSquareIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteResident(resident)}
                               className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-150"
-                              title="削除"
+                              title={t('roster.actionDelete')}
                             >
                               <TrashIcon className="w-4 h-4" />
                             </button>
@@ -674,90 +678,90 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <ModalHeader
-              title={`${viewingResident.name}さんの詳細`}
-              subtitle={`${viewingResident.gender} • ${calculateAge(viewingResident.birthDate)}歳 • 部屋${viewingResident.roomNumber}`}
+              title={t('roster.detailTitle', { name: viewingResident.name })}
+              subtitle={t('resident.subtitle', { gender: t(viewingResident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(viewingResident.birthDate), room: viewingResident.roomNumber })}
               icon={UserIcon}
               onClose={() => setViewingResident(null)}
             />
             <div className="p-6">
               <div className="mb-4">
                 {viewingResident.dischargeDate ? (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-700 rounded-full">退所済み</span>
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-700 rounded-full">{t('roster.dischargedFull')}</span>
                 ) : (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">入所中</span>
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">{t('roster.statusActive')}</span>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">氏名</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.name')}</label>
                   <p className="text-lg font-medium text-gray-900">{viewingResident.name}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">フリガナ</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.furigana')}</label>
                   <p className="text-lg font-medium text-gray-900">{viewingResident.furigana}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">性別</label>
-                  <p className="text-lg font-medium text-gray-900">{viewingResident.gender}</p>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.gender')}</label>
+                  <p className="text-lg font-medium text-gray-900">{t(viewingResident.gender === '男性' ? 'resident.male' : 'resident.female')}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">生年月日</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.birthDate')}</label>
                   <p className="text-lg font-medium text-gray-900">
-                    {dayjs(viewingResident.birthDate).format('YYYY年MM月DD日')} ({calculateAge(viewingResident.birthDate)}歳)
+                    {t('roster.birthDateValue', { date: dayjs(viewingResident.birthDate).format('YYYY年MM月DD日'), age: calculateAge(viewingResident.birthDate) })}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">部屋番号</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.room')}</label>
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">
                     {viewingResident.roomNumber}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">要介護度</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.careLevel')}</label>
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
-                    要介護{viewingResident.careLevel}
+                    {t('resident.careLevelOption', { n: viewingResident.careLevel })}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">入所日</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.admissionDate')}</label>
                   <p className="text-lg font-medium text-gray-900">
                     {dayjs(viewingResident.admissionDate).format('YYYY年MM月DD日')}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">退所日</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('roster.dischargeDate')}</label>
                   <p className="text-lg font-medium text-gray-900">
                     {viewingResident.dischargeDate ? dayjs(viewingResident.dischargeDate).format('YYYY年MM月DD日') : '-'}
                   </p>
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-500 mb-1">アレルギー</label>
+                <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.allergy')}</label>
                 {viewingResident.allergyStatus === 'あり' ? (
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
-                    {viewingResident.allergies || 'あり'}
+                    {viewingResident.allergies || t('resident.allergyPresent')}
                   </span>
                 ) : viewingResident.allergyStatus === 'なし' ? (
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-                    アレルギーなし
+                    {t('roster.noAllergy')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-amber-100 text-amber-800 rounded-full">
-                    未確認
+                    {t('resident.allergyUnknown')}
                   </span>
                 )}
               </div>
               {viewingResident.medicalHistory && (
                 <div>
                   <hr className="my-4 border-gray-200" />
-                  <label className="block text-sm font-medium text-gray-500 mb-2">既往歴</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">{t('resident.medicalHistory')}</label>
                   <p className="text-gray-700">{viewingResident.medicalHistory}</p>
                 </div>
               )}
               <div className="mt-6 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                作成: {viewingResident.createdBy?.name ?? '-'} ({dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm')})
+                {t('common.createdBy', { name: viewingResident.createdBy?.name ?? '-', date: dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm') })}
                 {viewingResident.updatedBy && (
-                  <> / 更新: {viewingResident.updatedBy.name} ({dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm')})</>
+                  <> / {t('common.updatedBy', { name: viewingResident.updatedBy.name, date: dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm') })}</>
                 )}
               </div>
             </div>
@@ -766,7 +770,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 onClick={() => setViewingResident(null)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
-                閉じる
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -776,12 +780,12 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteConfirmDialog.open && !!deleteConfirmDialog.resident}
-        title="入所者の削除確認"
+        title={t('roster.deleteConfirmTitle')}
         message={deleteConfirmDialog.resident
-          ? `${deleteConfirmDialog.resident.name}さん（部屋${deleteConfirmDialog.resident.roomNumber} / ${calculateAge(deleteConfirmDialog.resident.birthDate)}歳 / 要介護${deleteConfirmDialog.resident.careLevel}）を削除しますか？`
+          ? t('roster.deleteConfirmMsg', { name: deleteConfirmDialog.resident.name, room: deleteConfirmDialog.resident.roomNumber, age: calculateAge(deleteConfirmDialog.resident.birthDate), care: deleteConfirmDialog.resident.careLevel })
           : ''}
-        note="削除しても、診療録・投薬を含む記録は法定保存・監査のため残ります。一覧からは非表示になり、削除した人と日時が記録されます。"
-        confirmButtonText="削除する"
+        note={t('common.deleteNote')}
+        confirmButtonText={t('common.delete')}
         confirmButtonVariant="danger"
         onConfirm={confirmDeleteResident}
         onCancel={() => setDeleteConfirmDialog({ open: false, resident: null })}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { HeartIcon, PencilIcon, PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -56,6 +57,7 @@ const NumField = ({ label, value, onChange, step, placeholder }: {
 );
 
 const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
+  const { t } = useTranslation();
   const [vitals, setVitals] = useState<VitalSign[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,7 +85,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
       setVitals(await vitalSignService.getByResidentId(resident.id));
       setCurrentPage(1);
     } catch {
-      showSnackbar('バイタルの読み込みに失敗しました', 'error');
+      showSnackbar(t('vitals.loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -131,15 +133,15 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
     try {
       if (editing) {
         await vitalSignService.update(resident.id, editing.id, form, author);
-        showSnackbar('バイタルを更新しました', 'success');
+        showSnackbar(t('vitals.updatedOk'), 'success');
       } else {
         await vitalSignService.create(resident.id, form, author);
-        showSnackbar('バイタルを登録しました', 'success');
+        showSnackbar(t('vitals.createdOk'), 'success');
       }
       await load();
       setDialogOpen(false);
     } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : '保存に失敗しました', 'error');
+      showSnackbar(error instanceof Error ? error.message : t('vitals.saveError'), 'error');
     } finally {
       setFormLoading(false);
     }
@@ -150,10 +152,10 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
     try {
       await vitalSignService.delete(resident.id, deleteConfirm.vital.id, author);
       await load();
-      showSnackbar('バイタルを削除しました（記録は保持されます）', 'success');
+      showSnackbar(t('vitals.deletedOk'), 'success');
       setDeleteConfirm({ open: false, vital: null });
     } catch {
-      showSnackbar('削除に失敗しました', 'error');
+      showSnackbar(t('vitals.deleteError'), 'error');
     }
   };
 
@@ -174,8 +176,8 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             <ModalHeader
-              title={`${resident.name}さんのバイタル`}
-              subtitle={`${resident.gender} • ${calculateAge(resident.birthDate)}歳 • 部屋${resident.roomNumber}`}
+              title={t('vitals.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
               icon={HeartIcon}
               onClose={onClose}
             />
@@ -188,23 +190,23 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                       onClick={() => setView('list')}
                       className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     >
-                      一覧
+                      {t('vitals.tabList')}
                     </button>
                     <button
                       onClick={() => setView('trend')}
                       className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     >
-                      推移
+                      {t('vitals.tabTrend')}
                     </button>
                   </div>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{vitals.length}件</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('vitals.count', { count: vitals.length })}</span>
                 </div>
                 <button
                   onClick={openCreate}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
                 >
                   <PlusIcon className="w-5 h-5" />
-                  新規記録
+                  {t('common.newRecord')}
                 </button>
               </div>
 
@@ -212,26 +214,26 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                 <div className="flex justify-center py-12">
                   <div className="flex items-center gap-3">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="text-gray-600">読み込み中...</span>
+                    <span className="text-gray-600">{t('app.loading')}</span>
                   </div>
                 </div>
               ) : vitals.length === 0 ? (
-                <EmptyState title="バイタル記録がありません" hint="「新規記録」から登録してください" />
+                <EmptyState title={t('vitals.empty')} hint={t('vitals.emptyHint')} />
               ) : view === 'list' ? (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto shadow-sm">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">測定日時</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">体温</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">血圧</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">脈拍</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">SpO₂</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">体重</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">血糖</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-[160px]">備考</th>
-                          <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">操作</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colDateTime')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colTemp')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colBP')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colPulse')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colSpo2')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colWeight')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">{t('vitals.colGlucose')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-[160px]">{t('vitals.colNotes')}</th>
+                          <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">{t('vitals.colActions')}</th>
                         </tr>
                       </thead>
                       {pageItems.map((v) => (
@@ -270,14 +272,14 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                                 <button
                                   onClick={() => openEdit(v)}
                                   className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors duration-200"
-                                  title="編集"
+                                  title={t('common.edit')}
                                 >
                                   <PencilSquareIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setDeleteConfirm({ open: true, vital: v })}
                                   className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors duration-200"
-                                  title="削除"
+                                  title={t('vitals.deleteTip')}
                                 >
                                   <TrashIcon className="w-4 h-4" />
                                 </button>
@@ -286,8 +288,8 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                           </tr>
                           <tr>
                             <td colSpan={9} className="px-4 pb-3 pt-1 text-xs text-gray-400">
-                              作成: {v.createdBy?.name ?? '-'} ({dayjs(v.createdAt).format('YYYY/MM/DD HH:mm')})
-                              {v.updatedBy && <> / 更新: {v.updatedBy.name} ({dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm')})</>}
+                              {t('common.createdBy', { name: v.createdBy?.name ?? '-', date: dayjs(v.createdAt).format('YYYY/MM/DD HH:mm') })}
+                              {v.updatedBy && <> / {t('common.updatedBy', { name: v.updatedBy.name, date: dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm') })}</>}
                             </td>
                           </tr>
                         </tbody>
@@ -303,14 +305,14 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                           disabled={currentPage === 1}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          最初
+                          {t('common.first')}
                         </button>
                         <button
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          前へ
+                          {t('common.prev')}
                         </button>
                         <span className="px-4 py-2 text-sm font-medium text-gray-700">{currentPage} / {totalPages}</span>
                         <button
@@ -318,14 +320,14 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                           disabled={currentPage === totalPages}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          次へ
+                          {t('common.next')}
                         </button>
                         <button
                           onClick={() => setCurrentPage(totalPages)}
                           disabled={currentPage === totalPages}
                           className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          最後
+                          {t('common.last')}
                         </button>
                       </div>
                     </div>
@@ -352,13 +354,13 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <PencilIcon className="w-5 h-5" />
-                {editing ? 'バイタル編集' : '新規バイタル'}
+                {editing ? t('vitals.dialogEdit') : t('vitals.dialogNew')}
               </h3>
             </div>
 
             <div className="p-6 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">測定日時</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('vitals.measuredAt')}</label>
                 <input
                   type="datetime-local"
                   value={form.measuredAt}
@@ -369,28 +371,28 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <NumField label="体温 (℃)" value={form.temperature} onChange={setField('temperature')} step="0.1" placeholder="36.5" />
-                <NumField label="脈拍 (/分)" value={form.pulse} onChange={setField('pulse')} placeholder="72" />
-                <NumField label="SpO₂ (%)" value={form.spo2} onChange={setField('spo2')} placeholder="98" />
-                <NumField label="収縮期 (mmHg)" value={form.systolicBP} onChange={setField('systolicBP')} placeholder="120" />
-                <NumField label="拡張期 (mmHg)" value={form.diastolicBP} onChange={setField('diastolicBP')} placeholder="80" />
-                <NumField label="体重 (kg)" value={form.weight} onChange={setField('weight')} step="0.1" placeholder="55.0" />
-                <NumField label="血糖 (mg/dL)" value={form.bloodGlucose} onChange={setField('bloodGlucose')} placeholder="任意" />
+                <NumField label={t('vitals.fTemp')} value={form.temperature} onChange={setField('temperature')} step="0.1" placeholder="36.5" />
+                <NumField label={t('vitals.fPulse')} value={form.pulse} onChange={setField('pulse')} placeholder="72" />
+                <NumField label={t('vitals.fSpo2')} value={form.spo2} onChange={setField('spo2')} placeholder="98" />
+                <NumField label={t('vitals.fSystolic')} value={form.systolicBP} onChange={setField('systolicBP')} placeholder="120" />
+                <NumField label={t('vitals.fDiastolic')} value={form.diastolicBP} onChange={setField('diastolicBP')} placeholder="80" />
+                <NumField label={t('vitals.fWeight')} value={form.weight} onChange={setField('weight')} step="0.1" placeholder="55.0" />
+                <NumField label={t('vitals.fGlucose')} value={form.bloodGlucose} onChange={setField('bloodGlucose')} placeholder={t('vitals.glucosePh')} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('vitals.notesLabel')}</label>
                 <textarea
                   value={form.notes}
                   onChange={setField('notes')}
                   rows={2}
-                  placeholder="測定条件・特記事項など"
+                  placeholder={t('vitals.notesPh')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
                 />
               </div>
 
               {!hasAnyMeasure(form) && (
-                <p className="text-sm text-amber-700">いずれか1項目以上を入力してください。</p>
+                <p className="text-sm text-amber-700">{t('vitals.atLeastOne')}</p>
               )}
             </div>
 
@@ -401,7 +403,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <XMarkIcon className="w-4 h-4" />
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 onClick={submit}
@@ -409,7 +411,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckIcon className="w-4 h-4" />
-                {formLoading ? '保存中...' : '保存'}
+                {formLoading ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>
@@ -422,10 +424,10 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
       {/* 削除確認 */}
       <ConfirmDialog
         isOpen={deleteConfirm.open && !!deleteConfirm.vital}
-        title="バイタルの削除確認"
-        message={deleteConfirm.vital ? `${dayjs(deleteConfirm.vital.measuredAt).format('YYYY年MM月DD日 HH:mm')}（${resident.name}さん）のバイタル記録を削除しますか？` : ''}
-        note="削除しても、法定保存・監査のため記録は残ります。一覧からは非表示になり、削除した人と日時が記録されます。"
-        confirmButtonText="削除する"
+        title={t('vitals.deleteConfirmTitle')}
+        message={deleteConfirm.vital ? t('vitals.deleteConfirmMsg', { date: dayjs(deleteConfirm.vital.measuredAt).format('YYYY年MM月DD日 HH:mm'), name: resident.name }) : ''}
+        note={t('common.deleteNote')}
+        confirmButtonText={t('common.delete')}
         confirmButtonVariant="danger"
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirm({ open: false, vital: null })}
