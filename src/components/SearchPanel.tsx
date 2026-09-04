@@ -501,8 +501,8 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               title={resident.dischargeDate ? `退所済み（退所日: ${dayjs(resident.dischargeDate).format('YYYY年MM月DD日')}）` : '入所中'}
                             />
                             <div className="leading-tight">
-                              <div className="text-xs text-gray-500">{resident.furigana}</div>
-                              <div className="font-medium text-gray-900">{resident.name}</div>
+                              <div className="text-[11px] text-gray-500 leading-none">{resident.furigana}</div>
+                              <div className="text-sm font-semibold text-gray-900">{resident.name}</div>
                             </div>
                           </div>
                         </td>
