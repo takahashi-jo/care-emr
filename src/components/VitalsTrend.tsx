@@ -1,6 +1,9 @@
 import dayjs from 'dayjs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { VitalSign } from '../types';
+import { isVitalAbnormal } from '../constants/vitalReference';
+
+const ABNORMAL_COLOR = '#a83d35'; // 一覧の赤字と同じ muted red
 
 // バイタルの推移グラフ（項目別スモールマルチプル）。
 // recharts は重いため、このコンポーネントを VitalsManager 側で React.lazy 遅延ロードし、
@@ -18,14 +21,14 @@ const VitalsTrend = ({ vitals }: { vitals: VitalSign[] }) => {
     bloodGlucose: v.bloodGlucose ?? null,
   }));
 
-  const metrics: { key: string; title: string; unit: string; lines: { dataKey: string; name: string; color: string }[] }[] = [
-    { key: 'temperature', title: '体温', unit: '℃', lines: [{ dataKey: 'temperature', name: '体温', color: '#2f5b95' }] },
+  const metrics: { key: string; title: string; unit: string; lines: { dataKey: string; name: string; color: string; abnormal?: (v: number) => boolean }[] }[] = [
+    { key: 'temperature', title: '体温', unit: '℃', lines: [{ dataKey: 'temperature', name: '体温', color: '#2f5b95', abnormal: isVitalAbnormal.temperature }] },
     { key: 'bp', title: '血圧', unit: 'mmHg', lines: [
-        { dataKey: 'systolicBP', name: '収縮期', color: '#2f5b95' },
-        { dataKey: 'diastolicBP', name: '拡張期', color: '#90b4dd' },
+        { dataKey: 'systolicBP', name: '収縮期', color: '#2f5b95', abnormal: isVitalAbnormal.systolicBP },
+        { dataKey: 'diastolicBP', name: '拡張期', color: '#90b4dd', abnormal: isVitalAbnormal.diastolicBP },
       ] },
-    { key: 'pulse', title: '脈拍', unit: '/分', lines: [{ dataKey: 'pulse', name: '脈拍', color: '#2f5b95' }] },
-    { key: 'spo2', title: 'SpO₂', unit: '%', lines: [{ dataKey: 'spo2', name: 'SpO₂', color: '#2f5b95' }] },
+    { key: 'pulse', title: '脈拍', unit: '/分', lines: [{ dataKey: 'pulse', name: '脈拍', color: '#2f5b95', abnormal: isVitalAbnormal.pulse }] },
+    { key: 'spo2', title: 'SpO₂', unit: '%', lines: [{ dataKey: 'spo2', name: 'SpO₂', color: '#2f5b95', abnormal: isVitalAbnormal.spo2 }] },
     { key: 'weight', title: '体重', unit: 'kg', lines: [{ dataKey: 'weight', name: '体重', color: '#2f5b95' }] },
     { key: 'bloodGlucose', title: '血糖', unit: 'mg/dL', lines: [{ dataKey: 'bloodGlucose', name: '血糖', color: '#2f5b95' }] },
   ];
@@ -53,10 +56,25 @@ const VitalsTrend = ({ vitals }: { vitals: VitalSign[] }) => {
                   name={l.name}
                   stroke={l.color}
                   strokeWidth={2}
-                  dot={{ r: 2 }}
-                  activeDot={{ r: 4 }}
                   connectNulls
                   isAnimationActive={false}
+                  activeDot={{ r: 4 }}
+                  dot={({ cx, cy, value, index }) => {
+                    // 未測定（null）は描画しない
+                    if (cx == null || cy == null || value == null) {
+                      return <circle key={index} r={0} />;
+                    }
+                    const abn = l.abnormal ? l.abnormal(value as number) : false;
+                    return (
+                      <circle
+                        key={index}
+                        cx={cx}
+                        cy={cy}
+                        r={abn ? 3.4 : 2}
+                        fill={abn ? ABNORMAL_COLOR : l.color}
+                      />
+                    );
+                  }}
                 />
               ))}
             </LineChart>
