@@ -16,15 +16,22 @@
 
 ## 取り込み手順
 
+MEDIS 標準病名マスターの本体は `main/nmain518.txt`（病名基本テーブル。**カンマ区切り・Shift-JIS・ヘッダ無し**）。
+列レイアウトは `option/ttl_main.txt` に記載。実績（V5.18・27,877件）の列マッピングは次の通り:
+
+- `[2]` 病名表記 → `name`
+- `[3]` 病名表記カナ → `kana`
+- `[6]` ICD10‑2013 → `icd10`（ドット無し表記。例: E250 = E25.0）
+
 ```bash
-# 1) 列を確認（区切りがタブなら --tab を付ける）
-mise exec node@22 -- node scripts/import-disease-master.mjs ./nmain.txt --inspect --tab
+# 1) 列を確認
+mise exec node@22 -- node scripts/import-disease-master.mjs ./main/nmain518.txt --inspect
 
-# 2) 病名表記/カナ/ICD-10 の列番号を確認して取り込み（例）
-mise exec node@22 -- node scripts/import-disease-master.mjs ./nmain.txt --tab --map name=3,kana=4,icd10=5
+# 2) 取り込み（実績のマッピング）
+mise exec node@22 -- node scripts/import-disease-master.mjs ./main/nmain518.txt --map name=2,kana=3,icd10=6
 
-# 動作確認は --limit 100 を付けて少量から
-# 本番へ入れる場合は --prod ./scripts/admin/serviceAccountKey.json
+# 動作確認は --limit 100 で少量から。本番は --prod ./scripts/admin/serviceAccountKey.json
+# 置換取り込み時は既存 diseaseMaster を先にクリアする（重複防止）。
 ```
 
 ## 開発（Emulator）用サンプル
