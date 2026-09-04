@@ -114,3 +114,38 @@ export interface DrugMasterItem {
   yjCode?: string;
   hotCode?: string;
 }
+
+// バイタルサイン（residents/{id}/vitals サブコレクション）。1レコード=測定1回分。
+// 各測定項目は任意（その回に測ったものだけ記録する）。時系列の測定値として保持し、
+// 将来の検査結果も同じ器で扱えるようにする。
+export interface VitalSign {
+  id: string;
+  residentId: string;
+  measuredAt: Date;        // 測定日時
+  temperature?: number;    // 体温 ℃
+  systolicBP?: number;     // 収縮期血圧 mmHg
+  diastolicBP?: number;    // 拡張期血圧 mmHg
+  pulse?: number;          // 脈拍 /分
+  spo2?: number;           // SpO₂ %
+  weight?: number;         // 体重 kg
+  bloodGlucose?: number;   // 血糖 mg/dL（任意）
+  notes?: string;          // 備考（測定条件・特記事項）
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface VitalSignFormData {
+  measuredAt: string;      // 'YYYY-MM-DDTHH:mm'
+  temperature?: string;
+  systolicBP?: string;
+  diastolicBP?: string;
+  pulse?: string;
+  spo2?: string;
+  weight?: string;
+  bloodGlucose?: string;
+  notes?: string;
+}

@@ -34,6 +34,10 @@ const mutedAmber = { // warning・未確認（オーカー）
   50: '#fbf6eb', 100: '#f5e8cd', 200: '#ebd49d', 300: '#ddba6a', 400: '#cda13f',
   500: '#b8862a', 600: '#9d6d20', 700: '#7d551d', 800: '#66461e', 900: '#573c1d',
 }
+const mutedRose = { // バイタル導線のアクセント（落ち着いたローズ。赤=削除とは色相で区別）
+  50: '#fbf1f4', 100: '#f6dde4', 200: '#eec1cd', 300: '#e099ac', 400: '#cf6e88',
+  500: '#bc4d6b', 600: '#a63b58', 700: '#8a3249', 800: '#732d3f', 900: '#602937',
+}
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -54,6 +58,7 @@ export default {
         green: mutedGreen,   // success・入所中
         red: mutedRed,       // danger・エラー
         amber: mutedAmber,   // warning・未確認
+        rose: mutedRose,     // バイタル導線アクセント
       },
       fontFamily: {
         'sans': ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],

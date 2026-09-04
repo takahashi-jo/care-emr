@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon, CheckIcon, HeartIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
@@ -10,6 +10,7 @@ import { logger } from '../services/logger';
 import type { Resident, Medication } from '../types';
 import MedicalRecordsManager from './MedicalRecordsManager';
 import MedicationsManager from './MedicationsManager';
+import VitalsManager from './VitalsManager';
 import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
@@ -48,6 +49,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const [lastSearchValue, setLastSearchValue] = useState('');
   const [medicalRecordsOpen, setMedicalRecordsOpen] = useState(false);
   const [medicationsOpen, setMedicationsOpen] = useState(false);
+  const [vitalsOpen, setVitalsOpen] = useState(false);
   const [currentResident, setCurrentResident] = useState<Resident | null>(null);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [viewingResident, setViewingResident] = useState<Resident | null>(null);
@@ -214,6 +216,11 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const handleViewMedications = (resident: Resident) => {
     setCurrentResident(resident);
     setMedicationsOpen(true);
+  };
+
+  const handleViewVitals = (resident: Resident) => {
+    setCurrentResident(resident);
+    setVitalsOpen(true);
   };
 
   const handleEditResident = (resident: Resident) => {
@@ -481,7 +488,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">部屋</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">要介護度</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">継続中の薬剤</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[170px]">操作</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[200px]">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -546,6 +553,13 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               <DocumentTextIcon className="w-4 h-4" />
                             </button>
                             <button
+                              onClick={() => handleViewVitals(resident)}
+                              className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors duration-150"
+                              title="バイタル"
+                            >
+                              <HeartIcon className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleViewMedications(resident)}
                               className="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors duration-150"
                               title="投薬管理"
@@ -597,6 +611,17 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
             setMedicationsOpen(false);
             setCurrentResident(null);
             loadAllResidents();
+          }}
+        />
+      )}
+
+      {currentResident && (
+        <VitalsManager
+          resident={currentResident}
+          open={vitalsOpen}
+          onClose={() => {
+            setVitalsOpen(false);
+            setCurrentResident(null);
           }}
         />
       )}

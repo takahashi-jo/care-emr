@@ -114,6 +114,36 @@ function buildMedications(admissionDate) {
   });
 }
 
+function buildVitals() {
+  const count = 4 + Math.floor(Math.random() * 8); // 4〜11回
+  const baseWeight = 42 + Math.random() * 28;      // 入所者ごとの基準体重
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const out = [];
+  for (let k = 0; k < count; k++) {
+    // 直近から数日おきに測定
+    const measured = new Date();
+    measured.setDate(measured.getDate() - k * 3 - Math.floor(Math.random() * 2));
+    measured.setHours(8 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0, 0);
+    out.push({
+      measuredAt: Timestamp.fromDate(measured),
+      temperature: round1(36.2 + Math.random() * 1.6),          // 36.2〜37.8（時々発熱）
+      systolicBP: 105 + Math.floor(Math.random() * 45),         // 105〜149
+      diastolicBP: 60 + Math.floor(Math.random() * 35),         // 60〜94
+      pulse: 58 + Math.floor(Math.random() * 40),               // 58〜97
+      spo2: 92 + Math.floor(Math.random() * 8),                 // 92〜99（時々低め）
+      weight: round1(baseWeight + (Math.random() * 2 - 1)),     // 基準±1kg
+      bloodGlucose: Math.random() < 0.4 ? 90 + Math.floor(Math.random() * 90) : null, // 一部のみ測定
+      notes: '',
+      createdBy: SEED_AUTHOR,
+      updatedBy: SEED_AUTHOR,
+      deletedAt: null,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  }
+  return out;
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -173,6 +203,7 @@ async function main() {
   const RESIDENT_COUNT = 15;
   let recordCount = 0;
   let medCount = 0;
+  let vitalCount = 0;
   for (let i = 0; i < RESIDENT_COUNT; i++) {
     const resident = buildResident();
     const ref = await db.collection('residents').add(resident);
@@ -195,8 +226,13 @@ async function main() {
       await ref.collection('medications').add(med);
       medCount++;
     }
+    // バイタルを residents/{id}/vitals サブコレクションに投入
+    for (const v of buildVitals()) {
+      await ref.collection('vitals').add(v);
+      vitalCount++;
+    }
   }
-  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件を投入`);
+  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件を投入`);
   process.exit(0);
 }
 

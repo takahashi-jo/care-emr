@@ -17,12 +17,13 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
   MEDICAL_RECORDS: 'medicalRecords',
   MEDICATIONS: 'medications',
+  VITALS: 'vitals',
   DRUG_MASTER: 'drugMaster',
   REVISIONS: 'revisions'
 } as const;
@@ -32,6 +33,13 @@ const convertTimestampToDate = (timestamp: unknown): Date => {
     return (timestamp as { toDate: () => Date }).toDate();
   }
   return new Date(timestamp as string | number | Date);
+};
+
+// フォーム文字列を数値 or null に（空欄は未測定として null 保存）
+const toNumberOrNull = (s?: string): number | null => {
+  if (s === undefined || s === null || String(s).trim() === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
 };
 
 const convertResidentData = (id: string, data: Record<string, unknown>): Resident => {
@@ -111,6 +119,30 @@ const convertDrugMasterData = (id: string, data: Record<string, unknown>): DrugM
   yjCode: data.yjCode ? String(data.yjCode) : undefined,
   hotCode: data.hotCode ? String(data.hotCode) : undefined,
 });
+
+const convertVitalSignData = (residentId: string, id: string, data: Record<string, unknown>): VitalSign => {
+  const num = (v: unknown): number | undefined =>
+    v === null || v === undefined || v === '' ? undefined : Number(v);
+  return {
+    id,
+    residentId,
+    measuredAt: convertTimestampToDate(data.measuredAt),
+    temperature: num(data.temperature),
+    systolicBP: num(data.systolicBP),
+    diastolicBP: num(data.diastolicBP),
+    pulse: num(data.pulse),
+    spo2: num(data.spo2),
+    weight: num(data.weight),
+    bloodGlucose: num(data.bloodGlucose),
+    notes: data.notes ? String(data.notes) : undefined,
+    createdBy: (data.createdBy as RecordAuthor) || undefined,
+    updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+    deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+    deletedBy: (data.deletedBy as RecordAuthor) || undefined,
+    createdAt: convertTimestampToDate(data.createdAt),
+    updatedAt: convertTimestampToDate(data.updatedAt),
+  };
+};
 
 export const residentService = {
   async getAll(): Promise<Resident[]> {
@@ -588,6 +620,78 @@ export const medicationService = {
   // 入力誤りの削除用
   async delete(residentId: string, medicationId: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.MEDICATIONS, medicationId));
+  }
+};
+
+// バイタルは入所者のサブコレクション residents/{residentId}/vitals に保存
+export const vitalSignService = {
+  async getByResidentId(residentId: string): Promise<VitalSign[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.VITALS));
+      return snap.docs
+        .map(d => convertVitalSignData(residentId, d.id, d.data()))
+        .filter(v => !v.deletedAt) // 論理削除は除外
+        .sort((a, b) => dayjs(b.measuredAt).valueOf() - dayjs(a.measuredAt).valueOf());
+    } catch (error) {
+      logger.firestoreError('Failed to fetch vitals', error as Error, { action: 'get_vitals', residentId });
+      return [];
+    }
+  },
+
+  async create(residentId: string, data: VitalSignFormData, author: RecordAuthor): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(
+      collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.VITALS),
+      {
+        measuredAt: Timestamp.fromDate(new Date(data.measuredAt)),
+        temperature: toNumberOrNull(data.temperature),
+        systolicBP: toNumberOrNull(data.systolicBP),
+        diastolicBP: toNumberOrNull(data.diastolicBP),
+        pulse: toNumberOrNull(data.pulse),
+        spo2: toNumberOrNull(data.spo2),
+        weight: toNumberOrNull(data.weight),
+        bloodGlucose: toNumberOrNull(data.bloodGlucose),
+        notes: data.notes || '',
+        createdBy: author,
+        updatedBy: author,
+        deletedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+    );
+    return ref.id;
+  },
+
+  async update(residentId: string, vitalId: string, data: VitalSignFormData, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.VITALS, vitalId),
+      {
+        measuredAt: Timestamp.fromDate(new Date(data.measuredAt)),
+        temperature: toNumberOrNull(data.temperature),
+        systolicBP: toNumberOrNull(data.systolicBP),
+        diastolicBP: toNumberOrNull(data.diastolicBP),
+        pulse: toNumberOrNull(data.pulse),
+        spo2: toNumberOrNull(data.spo2),
+        weight: toNumberOrNull(data.weight),
+        bloodGlucose: toNumberOrNull(data.bloodGlucose),
+        notes: data.notes || '',
+        updatedBy: author,
+        updatedAt: Timestamp.now(),
+      }
+    );
+  },
+
+  // 論理削除（真正性のため物理削除しない）
+  async delete(residentId: string, vitalId: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.VITALS, vitalId),
+      {
+        deletedAt: Timestamp.now(),
+        deletedBy: author,
+        updatedAt: Timestamp.now(),
+        updatedBy: author,
+      }
+    );
   }
 };
 
