@@ -5,6 +5,8 @@ import { medicationService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import ConfirmDialog from './common/ConfirmDialog';
 import ModalHeader from './common/ModalHeader';
+import Snackbar from './common/Snackbar';
+import EmptyState from './common/EmptyState';
 import DrugNameAutocomplete from './DrugNameAutocomplete';
 import type { Resident, Medication, MedicationFormData, MedicationRoute, MedicationType } from '../types';
 
@@ -197,10 +199,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
               </div>
             ) : medications.length === 0 ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center bg-gray-50">
-                <p className="text-gray-600 font-medium">投薬が登録されていません</p>
-                <p className="text-sm text-gray-500 mt-1">「投薬を追加」から登録してください</p>
-              </div>
+              <EmptyState title="投薬が登録されていません" hint="「投薬を追加」から登録してください" />
             ) : (
               <div className="space-y-3">
                 {medications.map((med) => {
@@ -402,13 +401,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
       )}
 
       {/* Snackbar */}
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`px-4 py-3 rounded-lg shadow-lg font-medium ${snackbar.severity === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
-            {snackbar.message}
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} />
 
       {/* Confirm dialog for stop / delete */}
       <ConfirmDialog

@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import dayjs from 'dayjs';
-import { HeartIcon, PencilIcon, PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, PencilIcon, PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ConfirmDialog from './common/ConfirmDialog';
+import Snackbar from './common/Snackbar';
+import EmptyState from './common/EmptyState';
 import { vitalSignService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, VitalSign, VitalSignFormData } from '../types';
@@ -213,10 +216,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                   </div>
                 </div>
               ) : vitals.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center bg-gray-50">
-                  <p className="text-gray-600 font-medium">バイタル記録がありません</p>
-                  <p className="text-sm text-gray-500 mt-1">「新規記録」から登録してください</p>
-                </div>
+                <EmptyState title="バイタル記録がありません" hint="「新規記録」から登録してください" />
               ) : view === 'list' ? (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto shadow-sm">
@@ -417,71 +417,19 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
       )}
 
       {/* 通知 */}
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${
-            snackbar.severity === 'success'
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
-            <div className="flex-shrink-0">
-              {snackbar.severity === 'success' ? <CheckIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
-            </div>
-            <span className="flex-1 font-medium">{snackbar.message}</span>
-            <button
-              onClick={() => setSnackbar(prev => ({ ...prev, open: false }))}
-              className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
-              aria-label="閉じる"
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} />
 
       {/* 削除確認 */}
-      {deleteConfirm.open && deleteConfirm.vital && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
-              <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5" />
-                バイタルの削除確認
-              </h3>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-700 mb-2">以下のバイタル記録を削除しますか？</p>
-              <div className="bg-gray-50 p-3 rounded-lg border">
-                <div className="text-sm font-medium text-gray-900">
-                  {dayjs(deleteConfirm.vital.measuredAt).format('YYYY年MM月DD日 HH:mm')}
-                </div>
-                <div className="text-xs text-gray-600 mt-1">{resident.name}さん</div>
-              </div>
-              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800">
-                  真正性のため物理削除はしません。一覧からは非表示になりますが、記録は保持されます（誰が削除したかも記録されます）。
-                </p>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
-              <button
-                onClick={() => setDeleteConfirm({ open: false, vital: null })}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <XMarkIcon className="w-4 h-4" />
-                キャンセル
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <TrashIcon className="w-4 h-4" />
-                削除する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={deleteConfirm.open && !!deleteConfirm.vital}
+        title="バイタルの削除確認"
+        message={deleteConfirm.vital ? `${dayjs(deleteConfirm.vital.measuredAt).format('YYYY年MM月DD日 HH:mm')}（${resident.name}さん）のバイタル記録を削除しますか？` : ''}
+        note="真正性のため物理削除はしません。一覧からは非表示になりますが、記録は保持されます（誰が削除したかも記録されます）。"
+        confirmButtonText="削除する"
+        confirmButtonVariant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, vital: null })}
+      />
     </>
   );
 };

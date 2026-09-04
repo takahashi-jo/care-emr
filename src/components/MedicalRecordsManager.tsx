@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { PencilIcon, PencilSquareIcon, ClockIcon, XMarkIcon, DocumentTextIcon, PlusIcon, TrashIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PencilSquareIcon, ClockIcon, XMarkIcon, DocumentTextIcon, PlusIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ConfirmDialog from './common/ConfirmDialog';
+import Snackbar from './common/Snackbar';
+import EmptyState from './common/EmptyState';
 import { medicalRecordService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, MedicalRecord, MedicalRecordFormData, MedicalRecordRevision } from '../types';
@@ -210,10 +213,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                   </div>
                 </div>
               ) : medicalRecords.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center bg-gray-50">
-                  <p className="text-gray-600 font-medium">診療録がありません</p>
-                  <p className="text-sm text-gray-500 mt-1">「新規記録」から登録してください</p>
-                </div>
+                <EmptyState title="診療録がありません" hint="「新規記録」から登録してください" />
               ) : (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -388,85 +388,19 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
       )}
 
       {/* Notification */}
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${
-            snackbar.severity === 'success'
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
-            <div className="flex-shrink-0">
-              {snackbar.severity === 'success' ? (
-                <CheckIcon className="w-5 h-5" />
-              ) : (
-                <XMarkIcon className="w-5 h-5" />
-              )}
-            </div>
-            <span className="flex-1 font-medium">{snackbar.message}</span>
-            <button
-              onClick={handleCloseSnackbar}
-              className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={handleCloseSnackbar} />
 
       {/* Delete Confirmation Dialog */}
-      {deleteConfirmDialog.open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            {/* Dialog Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
-              <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5" />
-                診療録の削除確認
-              </h3>
-            </div>
-
-            {/* Dialog Content */}
-            <div className="p-6">
-              <div className="mb-4">
-                <p className="text-gray-700 mb-2">
-                  以下の診療録を削除しますか？
-                </p>
-                <div className="bg-gray-50 p-3 rounded-lg border">
-                  <div className="text-sm font-medium text-gray-900">
-                    {deleteConfirmDialog.recordDate}の診療録
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {resident.name}さん
-                  </div>
-                </div>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800">
-                  真正性のため物理削除はしません。一覧からは非表示になりますが、記録と訂正履歴は保持されます（誰が削除したかも記録されます）。
-                </p>
-              </div>
-            </div>
-
-            {/* Dialog Actions */}
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
-              <button
-                onClick={() => setDeleteConfirmDialog({ open: false, recordId: '', recordDate: '' })}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <XMarkIcon className="w-4 h-4" />
-                キャンセル
-              </button>
-              <button
-                onClick={confirmDeleteRecord}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <TrashIcon className="w-4 h-4" />
-                削除する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={deleteConfirmDialog.open}
+        title="診療録の削除確認"
+        message={`${deleteConfirmDialog.recordDate}の診療録（${resident.name}さん）を削除しますか？`}
+        note="真正性のため物理削除はしません。一覧からは非表示になりますが、記録と訂正履歴は保持されます（誰が削除したかも記録されます）。"
+        confirmButtonText="削除する"
+        confirmButtonVariant="danger"
+        onConfirm={confirmDeleteRecord}
+        onCancel={() => setDeleteConfirmDialog({ open: false, recordId: '', recordDate: '' })}
+      />
 
       {/* 訂正履歴ビュー */}
       {revisionView.open && (

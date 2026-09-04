@@ -5,6 +5,7 @@ interface ConfirmDialogProps {
   isOpen: boolean;
   title: string;
   message: string;
+  note?: string;          // 補足（真正性の注意書き等）を琥珀ボックスで表示
   confirmButtonText?: string;
   cancelButtonText?: string;
   confirmButtonVariant?: 'danger' | 'primary';
@@ -16,6 +17,7 @@ const ConfirmDialog = ({
   isOpen,
   title,
   message,
+  note,
   confirmButtonText = '確認',
   cancelButtonText = 'キャンセル',
   confirmButtonVariant = 'primary',
@@ -54,10 +56,15 @@ const ConfirmDialog = ({
           </div>
 
           {/* Content */}
-          <div className="px-6 pb-6">
-            <p className="text-gray-700 leading-relaxed">
+          <div className="px-6 pb-6 space-y-3">
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
               {message}
             </p>
+            {note && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800">{note}</p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

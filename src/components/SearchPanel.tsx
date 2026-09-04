@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon, CheckIcon, HeartIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, HeartIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ConfirmDialog from './common/ConfirmDialog';
+import Snackbar from './common/Snackbar';
 import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
@@ -772,87 +774,21 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {deleteConfirmDialog.open && deleteConfirmDialog.resident && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            {/* Dialog Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
-              <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5" />
-                入所者の削除確認
-              </h3>
-            </div>
-
-            {/* Dialog Content */}
-            <div className="p-6">
-              <div className="mb-4">
-                <p className="text-gray-700 mb-3">
-                  以下の入所者を削除しますか？
-                </p>
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                  <div className="text-lg font-medium text-gray-900 mb-2">
-                    {deleteConfirmDialog.resident.name}さん
-                  </div>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <div>部屋番号: {deleteConfirmDialog.resident.roomNumber}</div>
-                    <div>年齢: {calculateAge(deleteConfirmDialog.resident.birthDate)}歳</div>
-                    <div>要介護度: {deleteConfirmDialog.resident.careLevel}</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-sm text-amber-800">
-                  真正性のため物理削除はしません。一覧から非表示になりますが、診療録・投薬を含む記録は保持されます（誰が削除したかも記録されます）。
-                </p>
-              </div>
-            </div>
-
-            {/* Dialog Actions */}
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
-              <button
-                onClick={() => setDeleteConfirmDialog({ open: false, resident: null })}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <XMarkIcon className="w-4 h-4" />
-                キャンセル
-              </button>
-              <button
-                onClick={confirmDeleteResident}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <TrashIcon className="w-4 h-4" />
-                削除する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={deleteConfirmDialog.open && !!deleteConfirmDialog.resident}
+        title="入所者の削除確認"
+        message={deleteConfirmDialog.resident
+          ? `${deleteConfirmDialog.resident.name}さん（部屋${deleteConfirmDialog.resident.roomNumber} / ${calculateAge(deleteConfirmDialog.resident.birthDate)}歳 / 要介護${deleteConfirmDialog.resident.careLevel}）を削除しますか？`
+          : ''}
+        note="真正性のため物理削除はしません。一覧から非表示になりますが、診療録・投薬を含む記録は保持されます（誰が削除したかも記録されます）。"
+        confirmButtonText="削除する"
+        confirmButtonVariant="danger"
+        onConfirm={confirmDeleteResident}
+        onCancel={() => setDeleteConfirmDialog({ open: false, resident: null })}
+      />
 
       {/* Notification */}
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${
-            snackbar.severity === 'success'
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
-            <div className="flex-shrink-0">
-              {snackbar.severity === 'success' ? (
-                <CheckIcon className="w-5 h-5" />
-              ) : (
-                <XMarkIcon className="w-5 h-5" />
-              )}
-            </div>
-            <span className="flex-1 font-medium">{snackbar.message}</span>
-            <button
-              onClick={handleCloseSnackbar}
-              className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={handleCloseSnackbar} />
     </div>
   );
 };

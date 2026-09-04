@@ -5,6 +5,8 @@ import { problemService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import ConfirmDialog from './common/ConfirmDialog';
 import ModalHeader from './common/ModalHeader';
+import Snackbar from './common/Snackbar';
+import EmptyState from './common/EmptyState';
 import DiseaseNameAutocomplete from './DiseaseNameAutocomplete';
 import type { Resident, Problem, ProblemFormData, ProblemStatus } from '../types';
 
@@ -154,10 +156,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               </div>
             ) : problems.length === 0 ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center bg-gray-50">
-                <p className="text-gray-600 font-medium">プロブレムが登録されていません</p>
-                <p className="text-sm text-gray-500 mt-1">「問題を追加」から登録してください</p>
-              </div>
+              <EmptyState title="プロブレムが登録されていません" hint="「問題を追加」から登録してください" />
             ) : (
               <div className="space-y-3">
                 {problems.map((p) => {
@@ -330,13 +329,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
       )}
 
       {/* 通知 */}
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`px-4 py-3 rounded-lg shadow-lg font-medium ${snackbar.severity === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
-            {snackbar.message}
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} />
 
       {/* 消失 / 削除の確認 */}
       <ConfirmDialog
@@ -347,6 +340,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
             ? `「#${confirm.problem?.number} ${confirm.problem?.title}」を本日付で消失にしますか？（記録は残ります）`
             : `「#${confirm.problem?.number} ${confirm.problem?.title}」を削除しますか？入力誤りの取り消し用です。治癒・消失は「消失にする」を使ってください。`
         }
+        note={confirm.kind === 'delete' ? '真正性のため物理削除はしません。一覧からは非表示になりますが、記録は保持されます（誰が削除したかも記録されます）。' : undefined}
         confirmButtonText={confirm.kind === 'resolve' ? '消失にする' : '削除する'}
         cancelButtonText="キャンセル"
         confirmButtonVariant={confirm.kind === 'resolve' ? 'primary' : 'danger'}
