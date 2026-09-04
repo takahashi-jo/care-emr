@@ -7,7 +7,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { useAuth } from '../hooks/useAuth';
 import { logger } from '../services/logger';
-import type { Resident } from '../types';
+import type { Resident, Medication } from '../types';
 import MedicalRecordsManager from './MedicalRecordsManager';
 import MedicationsManager from './MedicationsManager';
 import ResidentEditForm from './ResidentEditForm';
@@ -31,6 +31,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const [listLoading, setListLoading] = useState(true);
   const [sortKey, setSortKey] = useState<'room' | 'name' | 'careLevel'>('room');
   const [showDischarged, setShowDischarged] = useState(false);
+  const [medsByResident, setMedsByResident] = useState<Map<string, Medication[]>>(new Map());
 
   const convertSpacesToFullWidth = (text: string): string => {
     return text.replace(/ /g, '　');
@@ -88,7 +89,12 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const loadAllResidents = useCallback(async () => {
     setListLoading(true);
     try {
-      setAllResidents(await residentService.getAll());
+      const [residents, meds] = await Promise.all([
+        residentService.getAll(),
+        medicationService.getContinuingByAllResidents(),
+      ]);
+      setAllResidents(residents);
+      setMedsByResident(meds);
     } finally {
       setListLoading(false);
     }
@@ -150,12 +156,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
             'search_by_room'
           ) || [];
           break;
-        case 'medication':
-          results = await measureAsyncOperation(
-            () => medicationService.searchResidentsByDrug(medicationSearch),
-            'search_by_medication'
-          ) || [];
+        case 'medication': {
+          // 継続中の投薬（一覧で取得済み）から部分一致でクライアント側フィルタ
+          const term = medicationSearch.trim();
+          results = allResidents.filter(r =>
+            (medsByResident.get(r.id) ?? []).some(m => m.name.includes(term))
+          );
           break;
+        }
         case 'careLevel':
           results = await measureAsyncOperation(
             () => residentService.getByCareLevel(careLevelSearch),
@@ -420,7 +428,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                  {hasSearched ? '検索結果' : '入所者一覧（回診）'}
+                  {hasSearched ? '検索結果' : '入所者一覧'}
                   {refreshing && (
                     <span className="inline-flex items-center gap-1 text-xs font-normal text-gray-400">
                       <span className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></span>
@@ -472,6 +480,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">年齢</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[60px]">部屋</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[80px]">要介護度</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">継続中の薬剤</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[120px]">操作</th>
                     </tr>
                   </thead>
@@ -493,7 +502,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                           <span className="text-gray-700">{calculateAge(resident.birthDate)}歳</span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
                             {resident.roomNumber}
                           </span>
                         </td>
@@ -501,6 +510,23 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             要介護{resident.careLevel}
                           </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {(medsByResident.get(resident.id) ?? []).length === 0 ? (
+                            <span className="text-sm text-gray-400">—</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {(medsByResident.get(resident.id) ?? []).map((m) => (
+                                <span
+                                  key={m.id}
+                                  className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded"
+                                  title={[m.dosage, m.frequency].filter(Boolean).join(' ')}
+                                >
+                                  {m.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-1 justify-center flex-wrap">
@@ -569,6 +595,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
           onClose={() => {
             setMedicationsOpen(false);
             setCurrentResident(null);
+            loadAllResidents();
           }}
         />
       )}
@@ -628,7 +655,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">部屋番号</label>
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-purple-100 text-purple-800 rounded-full">
+                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">
                     {viewingResident.roomNumber}
                   </span>
                 </div>

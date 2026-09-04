@@ -114,7 +114,7 @@ const MainApp = () => {
               >
                 <span className="flex items-center">
                   <PlusIcon className="w-4 h-4 mr-2" />
-                  新規登録
+                  新規入所者登録
                 </span>
               </button>
             </nav>

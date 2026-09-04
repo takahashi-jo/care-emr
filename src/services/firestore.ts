@@ -500,28 +500,28 @@ export const medicationService = {
     }
   },
 
-  // 服薬中の薬剤で入所者を検索（全入所者の medications サブコレクションを横断）
-  async searchResidentsByDrug(drugName: string): Promise<Resident[]> {
-    const term = drugName.trim();
-    if (!term) return [];
+  // 全入所者の「継続中」投薬をまとめて取得（回診一覧での服薬表示・服薬フィルタ用）。
+  // collectionGroup を制約なしで1回読むだけなので複合インデックス不要（本番でも安全）。
+  // 施設規模（数十〜百名）では十分軽量。継続中（中止日なし）のみ入所者IDごとに集約して返す。
+  async getContinuingByAllResidents(): Promise<Map<string, Medication[]>> {
+    const map = new Map<string, Medication[]>();
     try {
-      const snap = await getDocs(query(
-        collectionGroup(db, COLLECTIONS.MEDICATIONS),
-        where('name', '>=', term),
-        where('name', '<=', term + String.fromCharCode(0xf8ff)),
-        orderBy('name')
-      ));
-      const residentIds = [...new Set(
-        snap.docs.map(d => d.ref.parent.parent?.id).filter((id): id is string => !!id)
-      )];
-      const residents = await Promise.all(residentIds.map(id => residentService.getById(id)));
-      return residents
-        .filter((r): r is Resident => r !== null)
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const snap = await getDocs(collectionGroup(db, COLLECTIONS.MEDICATIONS));
+      snap.docs.forEach(d => {
+        const residentId = d.ref.parent.parent?.id;
+        if (!residentId) return;
+        const med = convertMedicationData(residentId, d.id, d.data());
+        if (med.endDate) return; // 継続中（中止日なし）のみ
+        const list = map.get(residentId) ?? [];
+        list.push(med);
+        map.set(residentId, list);
+      });
+      // 各入所者内は開始日の新しい順
+      map.forEach(list => list.sort((a, b) => dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf()));
     } catch (error) {
-      logger.firestoreError('Search residents by drug failed', error as Error, { action: 'search_by_drug' });
-      return [];
+      logger.firestoreError('Failed to fetch continuing medications', error as Error, { action: 'get_continuing_medications' });
     }
+    return map;
   },
 
   async create(residentId: string, data: MedicationFormData, author: RecordAuthor): Promise<string> {
