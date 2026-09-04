@@ -182,6 +182,53 @@ function buildProblems() {
   });
 }
 
+// 検査項目（老健で頻用の一部）。lo/hi は生成範囲（基準値をやや外れる値も出す）、d は小数桁。
+const SEED_LAB = [
+  { code: 'WBC', name: '白血球数 (WBC)', unit: '×10³/µL', refLow: 3.3, refHigh: 8.6, lo: 3.0, hi: 11.0, d: 1 },
+  { code: 'Hb', name: 'ヘモグロビン (Hb)', unit: 'g/dL', refLow: 11.6, refHigh: 16.8, lo: 9.5, hi: 16.0, d: 1 },
+  { code: 'Plt', name: '血小板数 (Plt)', unit: '×10⁴/µL', refLow: 15.8, refHigh: 34.8, lo: 14, hi: 35, d: 1 },
+  { code: 'Alb', name: 'アルブミン (Alb)', unit: 'g/dL', refLow: 4.1, refHigh: 5.1, lo: 3.2, hi: 5.0, d: 1 },
+  { code: 'AST', name: 'AST', unit: 'U/L', refLow: 13, refHigh: 30, lo: 14, hi: 55, d: 0 },
+  { code: 'ALT', name: 'ALT', unit: 'U/L', refLow: 10, refHigh: 42, lo: 10, hi: 60, d: 0 },
+  { code: 'BUN', name: '尿素窒素 (BUN)', unit: 'mg/dL', refLow: 8, refHigh: 20, lo: 9, hi: 30, d: 0 },
+  { code: 'Cr', name: 'クレアチニン (Cr)', unit: 'mg/dL', refLow: 0.46, refHigh: 1.07, lo: 0.5, hi: 1.6, d: 2 },
+  { code: 'eGFR', name: 'eGFR', unit: 'mL/min/1.73m²', refLow: 60, refHigh: null, lo: 35, hi: 90, d: 0 },
+  { code: 'Na', name: 'ナトリウム (Na)', unit: 'mEq/L', refLow: 138, refHigh: 145, lo: 135, hi: 146, d: 0 },
+  { code: 'K', name: 'カリウム (K)', unit: 'mEq/L', refLow: 3.6, refHigh: 4.8, lo: 3.4, hi: 5.2, d: 1 },
+  { code: 'CRP', name: 'CRP', unit: 'mg/dL', refLow: null, refHigh: 0.14, lo: 0.02, hi: 2.5, d: 2 },
+  { code: 'Glu', name: '血糖 (Glu)', unit: 'mg/dL', refLow: 73, refHigh: 109, lo: 80, hi: 180, d: 0 },
+  { code: 'HbA1c', name: 'HbA1c', unit: '%', refLow: 4.9, refHigh: 6.0, lo: 5.2, hi: 8.0, d: 1 },
+  { code: 'LDL', name: 'LDLコレステロール', unit: 'mg/dL', refLow: null, refHigh: 139, lo: 70, hi: 170, d: 0 },
+  { code: 'HDL', name: 'HDLコレステロール', unit: 'mg/dL', refLow: 40, refHigh: null, lo: 35, hi: 80, d: 0 },
+  { code: 'TG', name: '中性脂肪 (TG)', unit: 'mg/dL', refLow: 30, refHigh: 149, lo: 50, hi: 220, d: 0 },
+];
+
+function buildLabResults() {
+  const count = 1 + Math.floor(Math.random() * 3); // 1〜3回
+  const out = [];
+  for (let k = 0; k < count; k++) {
+    const collected = new Date();
+    collected.setDate(collected.getDate() - k * 90 - Math.floor(Math.random() * 20)); // 約3ヶ月おき
+    collected.setHours(9, Math.floor(Math.random() * 30), 0, 0);
+    const items = SEED_LAB.map((a) => {
+      const p = Math.pow(10, a.d);
+      const value = Math.round((a.lo + Math.random() * (a.hi - a.lo)) * p) / p;
+      return { code: a.code, name: a.name, value, unit: a.unit, refLow: a.refLow ?? null, refHigh: a.refHigh ?? null };
+    });
+    out.push({
+      collectedAt: Timestamp.fromDate(collected),
+      items,
+      notes: '',
+      createdBy: SEED_AUTHOR,
+      updatedBy: SEED_AUTHOR,
+      deletedAt: null,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  }
+  return out;
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -249,6 +296,7 @@ async function main() {
   let medCount = 0;
   let vitalCount = 0;
   let problemCount = 0;
+  let labCount = 0;
   for (let i = 0; i < RESIDENT_COUNT; i++) {
     const resident = buildResident();
     const ref = await db.collection('residents').add(resident);
@@ -281,8 +329,13 @@ async function main() {
       await ref.collection('problems').add(pr);
       problemCount++;
     }
+    // 検査結果を residents/{id}/labResults サブコレクションに投入
+    for (const lab of buildLabResults()) {
+      await ref.collection('labResults').add(lab);
+      labCount++;
+    }
   }
-  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件 / プロブレム ${problemCount} 件を投入`);
+  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件 / プロブレム ${problemCount} 件 / 検査 ${labCount} 件を投入`);
   process.exit(0);
 }
 

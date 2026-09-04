@@ -189,3 +189,44 @@ export interface DiseaseMasterItem {
   kana?: string;
   icd10?: string;          // ICD-10 コード（例: I10）
 }
+
+// 検査結果（residents/{id}/labResults サブコレクション）。1レコード=1採取（採血等）で、
+// その採取の複数項目（items）を保持する。基準値外は表示で強調。時系列の測定値として
+// バイタルと同じ器に載せ、項目別の推移グラフに拡張できる。
+export interface LabItem {
+  code: string;        // 検査コード（labReference 由来）
+  name: string;        // 表示名（採取時点のスナップショット）
+  value: number;
+  unit?: string;
+  refLow?: number;     // 基準値下限（未設定なら下限判定なし）
+  refHigh?: number;    // 基準値上限（未設定なら上限判定なし）
+}
+
+export interface LabResult {
+  id: string;
+  residentId: string;
+  collectedAt: Date;   // 採取日時
+  items: LabItem[];
+  notes?: string;
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LabItemFormData {
+  code: string;
+  name: string;
+  value: string;
+  unit?: string;
+  refLow?: string;
+  refHigh?: string;
+}
+
+export interface LabResultFormData {
+  collectedAt: string;   // 'YYYY-MM-DDTHH:mm'
+  items: LabItemFormData[];
+  notes?: string;
+}

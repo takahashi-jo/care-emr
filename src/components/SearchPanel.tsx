@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, HeartIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, HeartIcon, ClipboardDocumentListIcon, DocumentChartBarIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
@@ -15,6 +15,7 @@ import MedicalRecordsManager from './MedicalRecordsManager';
 import MedicationsManager from './MedicationsManager';
 import VitalsManager from './VitalsManager';
 import ProblemsManager from './ProblemsManager';
+import LabResultsManager from './LabResultsManager';
 import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
@@ -56,6 +57,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [vitalsOpen, setVitalsOpen] = useState(false);
   const [problemsOpen, setProblemsOpen] = useState(false);
+  const [labResultsOpen, setLabResultsOpen] = useState(false);
   const [currentResident, setCurrentResident] = useState<Resident | null>(null);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [viewingResident, setViewingResident] = useState<Resident | null>(null);
@@ -232,6 +234,11 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const handleViewProblems = (resident: Resident) => {
     setCurrentResident(resident);
     setProblemsOpen(true);
+  };
+
+  const handleViewLabs = (resident: Resident) => {
+    setCurrentResident(resident);
+    setLabResultsOpen(true);
   };
 
   const handleEditResident = (resident: Resident) => {
@@ -501,7 +508,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('roster.colRoom')}</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">{t('resident.careLevel')}</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 min-w-[180px]">{t('roster.medsColumn')}</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[230px]">{t('roster.colActions')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900 min-w-[260px]">{t('roster.colActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -583,6 +590,13 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               <HeartIcon className="w-4 h-4" />
                             </button>
                             <button
+                              onClick={() => handleViewLabs(resident)}
+                              className="p-1.5 text-cyan-600 hover:bg-cyan-100 rounded-lg transition-colors duration-150"
+                              title={t('roster.actionLabs')}
+                            >
+                              <DocumentChartBarIcon className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleViewMedications(resident)}
                               className="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors duration-150"
                               title={t('roster.actionMeds')}
@@ -655,6 +669,17 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
           open={problemsOpen}
           onClose={() => {
             setProblemsOpen(false);
+            setCurrentResident(null);
+          }}
+        />
+      )}
+
+      {currentResident && (
+        <LabResultsManager
+          resident={currentResident}
+          open={labResultsOpen}
+          onClose={() => {
+            setLabResultsOpen(false);
             setCurrentResident(null);
           }}
         />

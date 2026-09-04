@@ -17,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem, LabResult, LabResultFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
@@ -25,6 +25,7 @@ export const COLLECTIONS = {
   MEDICATIONS: 'medications',
   VITALS: 'vitals',
   PROBLEMS: 'problems',
+  LAB_RESULTS: 'labResults',
   DRUG_MASTER: 'drugMaster',
   DISEASE_MASTER: 'diseaseMaster',
   REVISIONS: 'revisions'
@@ -146,6 +147,32 @@ const convertDiseaseMasterData = (id: string, data: Record<string, unknown>): Di
   kana: data.kana ? String(data.kana) : undefined,
   icd10: data.icd10 ? String(data.icd10) : undefined,
 });
+
+const convertLabResultData = (residentId: string, id: string, data: Record<string, unknown>): LabResult => {
+  const rawItems = Array.isArray(data.items) ? (data.items as Record<string, unknown>[]) : [];
+  const num = (v: unknown): number | undefined =>
+    v === null || v === undefined || v === '' ? undefined : Number(v);
+  return {
+    id,
+    residentId,
+    collectedAt: convertTimestampToDate(data.collectedAt),
+    items: rawItems.map(it => ({
+      code: String(it.code || ''),
+      name: String(it.name || ''),
+      value: Number(it.value),
+      unit: it.unit ? String(it.unit) : undefined,
+      refLow: num(it.refLow),
+      refHigh: num(it.refHigh),
+    })),
+    notes: data.notes ? String(data.notes) : undefined,
+    createdBy: (data.createdBy as RecordAuthor) || undefined,
+    updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+    deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+    deletedBy: (data.deletedBy as RecordAuthor) || undefined,
+    createdAt: convertTimestampToDate(data.createdAt),
+    updatedAt: convertTimestampToDate(data.updatedAt),
+  };
+};
 
 const convertVitalSignData = (residentId: string, id: string, data: Record<string, unknown>): VitalSign => {
   const num = (v: unknown): number | undefined =>
@@ -850,5 +877,77 @@ export const diseaseMasterService = {
       logger.firestoreError('Disease master search failed', error as Error, { action: 'disease_search' });
       return [];
     }
+  }
+};
+
+// 検査結果は入所者のサブコレクション residents/{residentId}/labResults に保存
+const buildLabItems = (items: LabResultFormData['items']) =>
+  items
+    .filter(it => String(it.value).trim() !== '' && Number.isFinite(Number(it.value)))
+    .map(it => ({
+      code: it.code,
+      name: it.name,
+      value: Number(it.value),
+      unit: it.unit || null,
+      refLow: it.refLow != null && String(it.refLow).trim() !== '' ? Number(it.refLow) : null,
+      refHigh: it.refHigh != null && String(it.refHigh).trim() !== '' ? Number(it.refHigh) : null,
+    }));
+
+export const labResultService = {
+  async getByResidentId(residentId: string): Promise<LabResult[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.LAB_RESULTS));
+      return snap.docs
+        .map(d => convertLabResultData(residentId, d.id, d.data()))
+        .filter(r => !r.deletedAt) // 論理削除は除外
+        .sort((a, b) => dayjs(b.collectedAt).valueOf() - dayjs(a.collectedAt).valueOf());
+    } catch (error) {
+      logger.firestoreError('Failed to fetch lab results', error as Error, { action: 'get_lab_results', residentId });
+      return [];
+    }
+  },
+
+  async create(residentId: string, data: LabResultFormData, author: RecordAuthor): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(
+      collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.LAB_RESULTS),
+      {
+        collectedAt: Timestamp.fromDate(new Date(data.collectedAt)),
+        items: buildLabItems(data.items),
+        notes: data.notes || '',
+        createdBy: author,
+        updatedBy: author,
+        deletedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+    );
+    return ref.id;
+  },
+
+  async update(residentId: string, labId: string, data: LabResultFormData, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.LAB_RESULTS, labId),
+      {
+        collectedAt: Timestamp.fromDate(new Date(data.collectedAt)),
+        items: buildLabItems(data.items),
+        notes: data.notes || '',
+        updatedBy: author,
+        updatedAt: Timestamp.now(),
+      }
+    );
+  },
+
+  // 論理削除（真正性のため物理削除しない）
+  async delete(residentId: string, labId: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.LAB_RESULTS, labId),
+      {
+        deletedAt: Timestamp.now(),
+        deletedBy: author,
+        updatedAt: Timestamp.now(),
+        updatedBy: author,
+      }
+    );
   }
 };

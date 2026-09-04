@@ -42,6 +42,10 @@ const mutedIndigo = { // プロブレムリスト導線のアクセント（落�
   50: '#f4f2fb', 100: '#e7e2f5', 200: '#cfc6ea', 300: '#ab9dd6', 400: '#8670bf',
   500: '#6a51a6', 600: '#573f8c', 700: '#493473', 800: '#3e2f60', 900: '#372b51',
 }
+const mutedCyan = { // 検査結果導線のアクセント（落ち着いたシアン）
+  50: '#eef7f9', 100: '#d6ecf0', 200: '#aed7df', 300: '#7bbcca', 400: '#4b9caf',
+  500: '#2f8296', 600: '#256b7d', 700: '#215767', 800: '#204955', 900: '#1e3d47',
+}
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -64,6 +68,7 @@ export default {
         amber: mutedAmber,   // warning・未確認
         rose: mutedRose,     // バイタル導線アクセント
         indigo: mutedIndigo, // プロブレムリスト導線アクセント
+        cyan: mutedCyan,     // 検査結果導線アクセント
       },
       fontFamily: {
         'sans': ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
