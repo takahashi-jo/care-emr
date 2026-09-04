@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
-import ModalHeader from './common/ModalHeader';
+import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
 import { residentService, medicationService } from '../services/firestore';
@@ -11,12 +10,7 @@ import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { useAuth } from '../hooks/useAuth';
 import { logger } from '../services/logger';
 import type { Resident, Medication } from '../types';
-import MedicalRecordsManager from './MedicalRecordsManager';
-import MedicationsManager from './MedicationsManager';
-import VitalsManager from './VitalsManager';
-import ProblemsManager from './ProblemsManager';
-import LabResultsManager from './LabResultsManager';
-import RecordsMenu from './RecordsMenu';
+import PatientChart from './PatientChart';
 import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'careLevel' | 'medication';
@@ -54,14 +48,8 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
   };
 
   const [lastSearchValue, setLastSearchValue] = useState('');
-  const [medicalRecordsOpen, setMedicalRecordsOpen] = useState(false);
-  const [medicationsOpen, setMedicationsOpen] = useState(false);
-  const [vitalsOpen, setVitalsOpen] = useState(false);
-  const [problemsOpen, setProblemsOpen] = useState(false);
-  const [labResultsOpen, setLabResultsOpen] = useState(false);
-  const [currentResident, setCurrentResident] = useState<Resident | null>(null);
+  const [chartResident, setChartResident] = useState<Resident | null>(null);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
-  const [viewingResident, setViewingResident] = useState<Resident | null>(null);
 
   // 削除確認ダイアログ
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
@@ -217,37 +205,12 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
     setHasSearched(false);
   };
 
-  const handleViewMedicalRecords = (resident: Resident) => {
-    setCurrentResident(resident);
-    setMedicalRecordsOpen(true);
-  };
-
-  const handleViewMedications = (resident: Resident) => {
-    setCurrentResident(resident);
-    setMedicationsOpen(true);
-  };
-
-  const handleViewVitals = (resident: Resident) => {
-    setCurrentResident(resident);
-    setVitalsOpen(true);
-  };
-
-  const handleViewProblems = (resident: Resident) => {
-    setCurrentResident(resident);
-    setProblemsOpen(true);
-  };
-
-  const handleViewLabs = (resident: Resident) => {
-    setCurrentResident(resident);
-    setLabResultsOpen(true);
+  const handleOpenChart = (resident: Resident) => {
+    setChartResident(resident);
   };
 
   const handleEditResident = (resident: Resident) => {
     setEditingResident(resident);
-  };
-
-  const handleViewResident = (resident: Resident) => {
-    setViewingResident(resident);
   };
 
   const handleDeleteResident = (resident: Resident) => {
@@ -278,6 +241,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
       setAllResidents(prev => prev.filter(r => r.id !== resident.id));
       showSnackbar(t('roster.deletedOk', { name: resident.name }), 'success');
       setDeleteConfirmDialog({ open: false, resident: null });
+      setChartResident(null);
 
       logger.userAction('resident_deleted_success', {
         component: 'SearchPanel',
@@ -514,7 +478,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   </thead>
                   <tbody>
                     {displayed.map((resident) => (
-                      <tr key={resident.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 ${resident.dischargeDate ? 'opacity-60' : ''}`}>
+                      <tr key={resident.id} onClick={() => handleOpenChart(resident)} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${resident.dischargeDate ? 'opacity-60' : ''}`}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span
@@ -561,35 +525,13 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex gap-1 justify-center">
-                            <RecordsMenu
-                              resident={resident}
-                              onRecords={handleViewMedicalRecords}
-                              onProblems={handleViewProblems}
-                              onVitals={handleViewVitals}
-                              onLabs={handleViewLabs}
-                              onMeds={handleViewMedications}
-                            />
+                          <div className="flex justify-center">
                             <button
-                              onClick={() => handleViewResident(resident)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionDetail')}
+                              onClick={() => handleOpenChart(resident)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                             >
-                              <EyeIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleEditResident(resident)}
-                              className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors duration-150"
-                              title={t('common.edit')}
-                            >
-                              <PencilSquareIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteResident(resident)}
-                              className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-150"
-                              title={t('roster.actionDelete')}
-                            >
-                              <TrashIcon className="w-4 h-4" />
+                              {t('roster.openChart')}
+                              <ChevronRightIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
@@ -603,67 +545,29 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
         </div>
       )}
 
-      {currentResident && (
-        <MedicalRecordsManager
-          resident={currentResident}
-          open={medicalRecordsOpen}
+      {chartResident && (
+        <PatientChart
+          resident={chartResident}
+          open={!!chartResident}
           onClose={() => {
-            setMedicalRecordsOpen(false);
-            setCurrentResident(null);
-          }}
-        />
-      )}
-
-      {currentResident && (
-        <MedicationsManager
-          resident={currentResident}
-          open={medicationsOpen}
-          onClose={() => {
-            setMedicationsOpen(false);
-            setCurrentResident(null);
+            setChartResident(null);
             loadAllResidents();
           }}
-        />
-      )}
-
-      {currentResident && (
-        <VitalsManager
-          resident={currentResident}
-          open={vitalsOpen}
-          onClose={() => {
-            setVitalsOpen(false);
-            setCurrentResident(null);
-          }}
-        />
-      )}
-
-      {currentResident && (
-        <ProblemsManager
-          resident={currentResident}
-          open={problemsOpen}
-          onClose={() => {
-            setProblemsOpen(false);
-            setCurrentResident(null);
-          }}
-        />
-      )}
-
-      {currentResident && (
-        <LabResultsManager
-          resident={currentResident}
-          open={labResultsOpen}
-          onClose={() => {
-            setLabResultsOpen(false);
-            setCurrentResident(null);
-          }}
+          onEdit={(r) => handleEditResident(r)}
+          onDelete={(r) => handleDeleteResident(r)}
         />
       )}
 
       {editingResident && (
         <ResidentEditForm
           resident={editingResident}
-          onComplete={() => {
+          z="z-[100]"
+          onComplete={async () => {
             setEditingResident(null);
+            if (chartResident) {
+              const fresh = await residentService.getById(chartResident.id);
+              if (fresh) setChartResident(fresh);
+            }
             loadAllResidents();
             if (hasSearched) {
               handleSearch();
@@ -671,109 +575,6 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
           }}
           onCancel={() => setEditingResident(null)}
         />
-      )}
-
-      {viewingResident && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <ModalHeader
-              title={t('roster.detailTitle', { name: viewingResident.name })}
-              subtitle={t('resident.subtitle', { gender: t(viewingResident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(viewingResident.birthDate), room: viewingResident.roomNumber })}
-              icon={UserIcon}
-              onClose={() => setViewingResident(null)}
-            />
-            <div className="p-6">
-              <div className="mb-4">
-                {viewingResident.dischargeDate ? (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-700 rounded-full">{t('roster.dischargedFull')}</span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">{t('roster.statusActive')}</span>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.name')}</label>
-                  <p className="text-lg font-medium text-gray-900">{viewingResident.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.furigana')}</label>
-                  <p className="text-lg font-medium text-gray-900">{viewingResident.furigana}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.gender')}</label>
-                  <p className="text-lg font-medium text-gray-900">{t(viewingResident.gender === '男性' ? 'resident.male' : 'resident.female')}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.birthDate')}</label>
-                  <p className="text-lg font-medium text-gray-900">
-                    {t('roster.birthDateValue', { date: dayjs(viewingResident.birthDate).format('YYYY年MM月DD日'), age: calculateAge(viewingResident.birthDate) })}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.room')}</label>
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">
-                    {viewingResident.roomNumber}
-                  </span>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.careLevel')}</label>
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
-                    {t('resident.careLevelOption', { n: viewingResident.careLevel })}
-                  </span>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.admissionDate')}</label>
-                  <p className="text-lg font-medium text-gray-900">
-                    {dayjs(viewingResident.admissionDate).format('YYYY年MM月DD日')}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">{t('roster.dischargeDate')}</label>
-                  <p className="text-lg font-medium text-gray-900">
-                    {viewingResident.dischargeDate ? dayjs(viewingResident.dischargeDate).format('YYYY年MM月DD日') : '-'}
-                  </p>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.allergy')}</label>
-                {viewingResident.allergyStatus === 'あり' ? (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
-                    {viewingResident.allergies || t('resident.allergyPresent')}
-                  </span>
-                ) : viewingResident.allergyStatus === 'なし' ? (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-                    {t('roster.noAllergy')}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-amber-100 text-amber-800 rounded-full">
-                    {t('resident.allergyUnknown')}
-                  </span>
-                )}
-              </div>
-              {viewingResident.medicalHistory && (
-                <div>
-                  <hr className="my-4 border-gray-200" />
-                  <label className="block text-sm font-medium text-gray-500 mb-2">{t('resident.medicalHistory')}</label>
-                  <p className="text-gray-700">{viewingResident.medicalHistory}</p>
-                </div>
-              )}
-              <div className="mt-6 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                {t('common.createdBy', { name: viewingResident.createdBy?.name ?? '-', date: dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm') })}
-                {viewingResident.updatedBy && (
-                  <> / {t('common.updatedBy', { name: viewingResident.updatedBy.name, date: dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm') })}</>
-                )}
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end">
-              <button
-                onClick={() => setViewingResident(null)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
-              >
-                {t('common.close')}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Delete Confirmation Dialog */}

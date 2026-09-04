@@ -5,6 +5,7 @@ import { BeakerIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24
 import { medicationService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import ConfirmDialog from './common/ConfirmDialog';
+import ListSectionHeader from './common/ListSectionHeader';
 import ModalHeader from './common/ModalHeader';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
@@ -15,6 +16,7 @@ interface MedicationsManagerProps {
   resident: Resident;
   open: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 // 用法プリセット（日本病院薬剤師会・日本薬剤師会「標準用法用語集」に準拠した代表例）
@@ -77,7 +79,7 @@ const emptyForm = (): MedicationFormData => ({
   notes: '',
 });
 
-const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps) => {
+const MedicationsManager = ({ resident, open, onClose, embedded = false }: MedicationsManagerProps) => {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -179,32 +181,17 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
 
   const activeCount = medications.filter(m => !m.endDate).length;
 
-  return (
+  const content = (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-          <ModalHeader
-            title={t('medication.title', { name: resident.name })}
-            subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: dayjs().diff(dayjs(resident.birthDate), 'year'), room: resident.roomNumber })}
-            icon={BeakerIcon}
-            onClose={onClose}
-          />
-
-          {/* Content */}
-          <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-gray-800">{t('medication.listTitle')}</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('medication.count', { active: activeCount, total: medications.length })}</span>
-              </div>
-              <button
-                onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-              >
-                <PlusIcon className="w-5 h-5" />
-                {t('medication.add')}
-              </button>
-            </div>
+      <ListSectionHeader title={t('medication.listTitle')} badge={t('medication.count', { active: activeCount, total: medications.length })}>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        >
+          <PlusIcon className="w-5 h-5" />
+          {t('medication.add')}
+        </button>
+      </ListSectionHeader>
 
             {loading ? (
               <div className="flex justify-center py-12">
@@ -280,9 +267,26 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                 })}
               </div>
             )}
+    </>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        <div className="p-6">{content}</div>
+      ) : (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <ModalHeader
+              title={t('medication.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: dayjs().diff(dayjs(resident.birthDate), 'year'), room: resident.roomNumber })}
+              icon={BeakerIcon}
+              onClose={onClose}
+            />
+            <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">{content}</div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Add / Edit form dialog */}
       {formOpen && (

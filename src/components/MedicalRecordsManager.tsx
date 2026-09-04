@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { PencilIcon, PencilSquareIcon, ClockIcon, XMarkIcon, DocumentTextIcon, PlusIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ListSectionHeader from './common/ListSectionHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
@@ -14,11 +15,12 @@ interface MedicalRecordsManagerProps {
   resident: Resident;
   open: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const RECORDS_PER_PAGE = 10;
 
-const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManagerProps) => {
+const MedicalRecordsManager = ({ resident, open, onClose, embedded = false }: MedicalRecordsManagerProps) => {
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -174,38 +176,17 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
     return dayjs().diff(dayjs(birthDate), 'year');
   };
 
-  return (
+  const content = (
     <>
-      {/* Main Records Manager Modal */}
-      {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <ModalHeader
-              title={t('medicalRecord.title', { name: resident.name })}
-              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
-              icon={DocumentTextIcon}
-              onClose={onClose}
-            />
-
-            {/* Content */}
-            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {t('medicalRecord.listTitle')}
-                  </h3>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                    {t('medicalRecord.count', { count: medicalRecords.length })}
-                  </span>
-                </div>
-                <button
-                  onClick={handleAddRecord}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  {t('common.newRecord')}
-                </button>
-              </div>
+      <ListSectionHeader title={t('medicalRecord.listTitle')} badge={t('medicalRecord.count', { count: medicalRecords.length })}>
+        <button
+          onClick={handleAddRecord}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        >
+          <PlusIcon className="w-5 h-5" />
+          {t('common.newRecord')}
+        </button>
+      </ListSectionHeader>
 
               {loading ? (
                 <div className="flex justify-center py-12">
@@ -319,10 +300,28 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                   )}
                 </div>
               )}
+    </>
+  );
+
+  return (
+    <>
+      {open && (embedded ? (
+        <div className="p-6">{content}</div>
+      ) : (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <ModalHeader
+              title={t('medicalRecord.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
+              icon={DocumentTextIcon}
+              onClose={onClose}
+            />
+            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+              {content}
             </div>
           </div>
         </div>
-      )}
+      ))}
 
       {/* Record Edit Dialog */}
       {recordDialogOpen && (

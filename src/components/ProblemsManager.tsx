@@ -5,6 +5,7 @@ import { ClipboardDocumentListIcon, PlusIcon, PencilIcon, TrashIcon } from '@her
 import { problemService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import ConfirmDialog from './common/ConfirmDialog';
+import ListSectionHeader from './common/ListSectionHeader';
 import ModalHeader from './common/ModalHeader';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
@@ -15,6 +16,7 @@ interface ProblemsManagerProps {
   resident: Resident;
   open: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const emptyForm = (nextNumber: number): ProblemFormData => ({
@@ -27,7 +29,7 @@ const emptyForm = (nextNumber: number): ProblemFormData => ({
   notes: '',
 });
 
-const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
+const ProblemsManager = ({ resident, open, onClose, embedded = false }: ProblemsManagerProps) => {
   const { t } = useTranslation();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,31 +129,17 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
   const activeCount = problems.filter(p => p.status === '現行').length;
   const calculateAge = (birthDate: Date): number => dayjs().diff(dayjs(birthDate), 'year');
 
-  return (
+  const content = (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-          <ModalHeader
-            title={t('problem.title', { name: resident.name })}
-            subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
-            icon={ClipboardDocumentListIcon}
-            onClose={onClose}
-          />
-
-          <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-gray-800">{t('problem.listTitle')}</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('problem.count', { active: activeCount, total: problems.length })}</span>
-              </div>
-              <button
-                onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-              >
-                <PlusIcon className="w-5 h-5" />
-                {t('problem.add')}
-              </button>
-            </div>
+      <ListSectionHeader title={t('problem.listTitle')} badge={t('problem.count', { active: activeCount, total: problems.length })}>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        >
+          <PlusIcon className="w-5 h-5" />
+          {t('problem.add')}
+        </button>
+      </ListSectionHeader>
 
             {loading ? (
               <div className="flex justify-center py-12">
@@ -223,9 +211,26 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
                 })}
               </div>
             )}
+    </>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        <div className="p-6">{content}</div>
+      ) : (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <ModalHeader
+              title={t('problem.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
+              icon={ClipboardDocumentListIcon}
+              onClose={onClose}
+            />
+            <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">{content}</div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 追加 / 編集ダイアログ */}
       {formOpen && (

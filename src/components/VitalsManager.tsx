@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { HeartIcon, PencilIcon, PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ListSectionHeader from './common/ListSectionHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
@@ -18,6 +19,7 @@ interface VitalsManagerProps {
   resident: Resident;
   open: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const PER_PAGE = 15;
@@ -56,7 +58,7 @@ const NumField = ({ label, value, onChange, step, placeholder }: {
   </div>
 );
 
-const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
+const VitalsManager = ({ resident, open, onClose, embedded = false }: VitalsManagerProps) => {
   const { t } = useTranslation();
   const [vitals, setVitals] = useState<VitalSign[]>([]);
   const [loading, setLoading] = useState(false);
@@ -170,45 +172,31 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
     return <span className={isAbn ? 'text-red-600 font-semibold' : 'text-gray-900'}>{value}{unit}</span>;
   };
 
-  return (
+  const content = (
     <>
-      {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <ModalHeader
-              title={t('vitals.title', { name: resident.name })}
-              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
-              icon={HeartIcon}
-              onClose={onClose}
-            />
-
-            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm">
-                    <button
-                      onClick={() => setView('list')}
-                      className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {t('vitals.tabList')}
-                    </button>
-                    <button
-                      onClick={() => setView('trend')}
-                      className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {t('vitals.tabTrend')}
-                    </button>
-                  </div>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('vitals.count', { count: vitals.length })}</span>
-                </div>
-                <button
-                  onClick={openCreate}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  {t('common.newRecord')}
-                </button>
-              </div>
+      <ListSectionHeader title={t('vitals.listTitle')} badge={t('vitals.count', { count: vitals.length })}>
+        <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+          <button
+            onClick={() => setView('list')}
+            className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            {t('vitals.tabList')}
+          </button>
+          <button
+            onClick={() => setView('trend')}
+            className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            {t('vitals.tabTrend')}
+          </button>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        >
+          <PlusIcon className="w-5 h-5" />
+          {t('common.newRecord')}
+        </button>
+      </ListSectionHeader>
 
               {loading ? (
                 <div className="flex justify-center py-12">
@@ -342,10 +330,26 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                   <VitalsTrend vitals={vitals} />
                 </Suspense>
               )}
-            </div>
+    </>
+  );
+
+  return (
+    <>
+      {open && (embedded ? (
+        <div className="p-6">{content}</div>
+      ) : (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <ModalHeader
+              title={t('vitals.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
+              icon={HeartIcon}
+              onClose={onClose}
+            />
+            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">{content}</div>
           </div>
         </div>
-      )}
+      ))}
 
       {/* 入力ダイアログ */}
       {dialogOpen && (

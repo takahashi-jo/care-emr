@@ -19,9 +19,10 @@ interface ResidentEditFormProps {
   resident: Resident;
   onComplete: () => void;
   onCancel: () => void;
+  z?: string; // 患者カルテ上に重ねる場合など、入れ子モーダルの重なり順を上げる
 }
 
-const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormProps) => {
+const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFormProps) => {
   const [formData, setFormData] = useState<ResidentFormData>({
     name: resident.name,
     furigana: resident.furigana,
@@ -121,7 +122,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
 
   return (
     <>
-      <ModalShell maxWidth="max-w-4xl">
+      <ModalShell maxWidth="max-w-4xl" z={z}>
         <ModalHeader title={t('resident.editTitle', { name: resident.name })} icon={PencilIcon} onClose={onCancel} />
 
         <div className="p-6 overflow-y-auto">

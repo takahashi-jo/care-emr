@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { ChartBarIcon, PlusIcon, PencilIcon, PencilSquareIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
+import ListSectionHeader from './common/ListSectionHeader';
 import ConfirmDialog from './common/ConfirmDialog';
 import Snackbar from './common/Snackbar';
 import EmptyState from './common/EmptyState';
@@ -18,6 +19,7 @@ interface LabResultsManagerProps {
   resident: Resident;
   open: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 // 全項目を並べたパネル形式のフォーム。値を入れた項目だけ保存される。
@@ -34,7 +36,7 @@ const emptyForm = (): LabResultFormData => ({
   notes: '',
 });
 
-const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) => {
+const LabResultsManager = ({ resident, open, onClose, embedded = false }: LabResultsManagerProps) => {
   const { t } = useTranslation();
   const [labs, setLabs] = useState<LabResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,44 +141,31 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
   // 検査項目名は code から i18n 解決（保存済みの日本語名をフォールバックに）
   const labName = (code: string, fallback: string) => t(`lab.${code}`, { defaultValue: fallback });
 
-  return (
+  const content = (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-          <ModalHeader
-            title={t('labResult.title', { name: resident.name })}
-            subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
-            icon={ChartBarIcon}
-            onClose={onClose}
-          />
-
-          <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm">
-                  <button
-                    onClick={() => setView('list')}
-                    className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    {t('labResult.tabList')}
-                  </button>
-                  <button
-                    onClick={() => setView('trend')}
-                    className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    {t('labResult.tabTrend')}
-                  </button>
-                </div>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{t('labResult.count', { count: labs.length })}</span>
-              </div>
-              <button
-                onClick={openCreate}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-              >
-                <PlusIcon className="w-5 h-5" />
-                {t('labResult.add')}
-              </button>
-            </div>
+      <ListSectionHeader title={t('labResult.listTitle')} badge={t('labResult.count', { count: labs.length })}>
+        <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+          <button
+            onClick={() => setView('list')}
+            className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            {t('labResult.tabList')}
+          </button>
+          <button
+            onClick={() => setView('trend')}
+            className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            {t('labResult.tabTrend')}
+          </button>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        >
+          <PlusIcon className="w-5 h-5" />
+          {t('labResult.add')}
+        </button>
+      </ListSectionHeader>
 
             {loading ? (
               <div className="flex justify-center py-12">
@@ -239,9 +228,26 @@ const LabResultsManager = ({ resident, open, onClose }: LabResultsManagerProps) 
                 <LabTrend labs={labs} />
               </Suspense>
             )}
+    </>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        <div className="p-6">{content}</div>
+      ) : (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <ModalHeader
+              title={t('labResult.title', { name: resident.name })}
+              subtitle={t('resident.subtitle', { gender: t(resident.gender === '男性' ? 'resident.male' : 'resident.female'), age: calculateAge(resident.birthDate), room: resident.roomNumber })}
+              icon={ChartBarIcon}
+              onClose={onClose}
+            />
+            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">{content}</div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 入力ダイアログ（全項目パネル。値を入れた項目だけ保存） */}
       {dialogOpen && (

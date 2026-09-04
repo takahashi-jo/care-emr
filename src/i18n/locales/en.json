@@ -192,15 +192,7 @@
     "ageValue": "{{age}}y",
     "statusActive": "Active",
     "dischargedTooltip": "Discharged (on {{date}})",
-    "actionDetail": "Details",
-    "actionRecords": "Records",
-    "actionProblems": "Problem list",
-    "actionVitals": "Vitals",
-    "actionMeds": "Medications",
-    "actionLabs": "Lab results",
-    "records": "Records",
-    "actionDelete": "Delete",
-    "detailTitle": "{{name}} — details",
+    "openChart": "Chart",
     "dischargedFull": "Discharged",
     "birthDateValue": "{{date}} ({{age}}y)",
     "dischargeDate": "Discharge date",
@@ -243,6 +235,7 @@
   "vitals": {
     "loadError": "Failed to load vitals",
     "title": "Vitals — {{name}}",
+    "listTitle": "Vitals",
     "tabList": "List",
     "tabTrend": "Trend",
     "count": "{{count}}",
@@ -290,6 +283,7 @@
   },
   "labResult": {
     "title": "Lab results — {{name}}",
+    "listTitle": "Lab results",
     "tabList": "List",
     "tabTrend": "Trend",
     "count": "{{count}}",
@@ -314,6 +308,14 @@
     "deleteError": "Failed to delete",
     "deleteConfirmTitle": "Delete lab result",
     "deleteConfirmMsg": "Delete the lab result from {{date}} for {{name}}?"
+  },
+  "chart": {
+    "tabOverview": "Overview",
+    "tabRecords": "Records",
+    "tabProblems": "Problems",
+    "tabVitals": "Vitals",
+    "tabLabs": "Labs",
+    "tabMeds": "Meds"
   },
   "lab": {
     "WBC": "WBC",
