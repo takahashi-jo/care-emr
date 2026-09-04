@@ -195,7 +195,7 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
-            <FormField label="アレルギー" required help="入所時に必ず確認してください">
+            <FormField label="アレルギー" required>
               <div className="flex items-center gap-6 py-1">
                 <label className="flex items-center gap-1.5 text-sm text-gray-800">
                   <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'なし'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'なし', allergies: '' }))} />

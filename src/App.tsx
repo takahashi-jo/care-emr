@@ -127,7 +127,7 @@ const MainApp = () => {
         </div>
 
         <TabPanel value={tabValue} index={0}>
-          <SearchPanel />
+          <SearchPanel active={tabValue === 0} />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>

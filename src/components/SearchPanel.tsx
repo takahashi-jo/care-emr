@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { BeakerIcon, UserIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -14,7 +14,7 @@ import ResidentEditForm from './ResidentEditForm';
 
 type SearchType = 'name' | 'room' | 'medication' | 'careLevel';
 
-const SearchPanel = () => {
+const SearchPanel = ({ active = true }: { active?: boolean }) => {
   const [searchType, setSearchType] = useState<SearchType>('name');
   const [nameSearch, setNameSearch] = useState('');
   const [roomSearch, setRoomSearch] = useState('');
@@ -84,17 +84,20 @@ const SearchPanel = () => {
     return dayjs().diff(dayjs(birthDate), 'year');
   };
 
-  // マウント時に全入所者を取得（回診の既定ビュー）
-  useEffect(() => {
-    (async () => {
-      setListLoading(true);
-      try {
-        setAllResidents(await residentService.getAll());
-      } finally {
-        setListLoading(false);
-      }
-    })();
+  // 全入所者を取得（回診の既定ビュー）
+  const loadAllResidents = useCallback(async () => {
+    setListLoading(true);
+    try {
+      setAllResidents(await residentService.getAll());
+    } finally {
+      setListLoading(false);
+    }
   }, []);
+
+  // 検索タブが表示されるたびに最新化（新規登録・編集の反映）
+  useEffect(() => {
+    if (active) loadAllResidents();
+  }, [active, loadAllResidents]);
 
   const roomNum = (r: Resident) => parseInt((r.roomNumber || '').replace(/\D/g, ''), 10) || 0;
   const sortResidents = (list: Resident[]) => {
@@ -476,9 +479,6 @@ const SearchPanel = () => {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-900">{resident.name}</span>
-                            {resident.allergyStatus === 'あり' && (
-                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">アレルギー</span>
-                            )}
                             {resident.dischargeDate && (
                               <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">退所</span>
                             )}
@@ -585,6 +585,7 @@ const SearchPanel = () => {
           resident={editingResident}
           onComplete={() => {
             setEditingResident(null);
+            loadAllResidents();
             if (hasSearched) {
               handleSearch();
             }
@@ -668,6 +669,12 @@ const SearchPanel = () => {
                   <p className="text-gray-700">{viewingResident.medicalHistory}</p>
                 </div>
               )}
+              <div className="mt-6 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                作成: {viewingResident.createdBy?.name ?? '—'}（{dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm')}）
+                {viewingResident.updatedBy && (
+                  <> ／ 更新: {viewingResident.updatedBy.name}（{dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm')}）</>
+                )}
+              </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
