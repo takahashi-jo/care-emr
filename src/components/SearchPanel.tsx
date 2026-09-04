@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { BeakerIcon, UserIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, UserIcon, MagnifyingGlassIcon, XMarkIcon, EyeIcon, DocumentTextIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon, CheckIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
@@ -278,9 +278,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6">
           <div className="flex items-center gap-2 mb-6">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <MagnifyingGlassIcon className="w-6 h-6 text-blue-600" />
             <h2 className="text-xl font-semibold text-gray-900">入所者検索</h2>
           </div>
 
@@ -391,9 +389,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 disabled={loading}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors duration-200 gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-4 h-4" />
                 クリア
               </button>
               <button
@@ -408,9 +404,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <MagnifyingGlassIcon className="w-4 h-4" />
                     検索
                   </>
                 )}
@@ -515,19 +509,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-150"
                               title="詳細表示"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
+                              <EyeIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewMedicalRecords(resident)}
                               className="p-1.5 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-150"
                               title="診療録"
                             >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M19.5 3H4.5C3.12 3 2 4.12 2 5.5v13C2 19.88 3.12 21 4.5 21h15c1.38 0 2.5-1.12 2.5-2.5v-13C22 4.12 20.88 3 19.5 3zM19 18H5V8h14v10zm-8-9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
-                              </svg>
+                              <DocumentTextIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleViewMedications(resident)}
@@ -541,18 +530,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                               className="p-1.5 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors duration-150"
                               title="編集"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
+                              <PencilSquareIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteResident(resident)}
                               className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-150"
                               title="削除"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <TrashIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
@@ -703,9 +688,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
             {/* Dialog Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
               <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.46 0L4.354 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <ExclamationTriangleIcon className="w-5 h-5" />
                 入所者の削除確認
               </h3>
             </div>
@@ -740,18 +723,14 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 onClick={() => setDeleteConfirmDialog({ open: false, resident: null })}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-4 h-4" />
                 キャンセル
               </button>
               <button
                 onClick={confirmDeleteResident}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon className="w-4 h-4" />
                 削除する
               </button>
             </div>
@@ -769,13 +748,9 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
           }`}>
             <div className="flex-shrink-0">
               {snackbar.severity === 'success' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckIcon className="w-5 h-5" />
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-5 h-5" />
               )}
             </div>
             <span className="flex-1 font-medium">{snackbar.message}</span>
@@ -783,9 +758,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
               onClick={handleCloseSnackbar}
               className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <XMarkIcon className="w-4 h-4" />
             </button>
           </div>
         </div>

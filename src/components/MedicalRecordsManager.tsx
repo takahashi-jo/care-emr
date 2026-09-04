@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
-import { PencilIcon, ClockIcon, XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PencilSquareIcon, ClockIcon, XMarkIcon, DocumentTextIcon, PlusIcon, TrashIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
 import { medicalRecordService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
@@ -197,9 +197,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                   onClick={handleAddRecord}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
+                  <PlusIcon className="w-5 h-5" />
                   新規記録
                 </button>
               </div>
@@ -263,18 +261,14 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                                   className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors duration-200"
                                   title="編集"
                                 >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
+                                  <PencilSquareIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteRecord(record)}
                                   className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors duration-200"
                                   title="削除"
                                 >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
+                                  <TrashIcon className="w-4 h-4" />
                                 </button>
                               </div>
                             </td>
@@ -377,9 +371,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 disabled={formLoading}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-4 h-4" />
                 キャンセル
               </button>
               <button
@@ -387,9 +379,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 disabled={formLoading || !recordForm.record.trim()}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckIcon className="w-4 h-4" />
                 {formLoading ? '保存中...' : '保存'}
               </button>
             </div>
@@ -407,13 +397,9 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
           }`}>
             <div className="flex-shrink-0">
               {snackbar.severity === 'success' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckIcon className="w-5 h-5" />
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-5 h-5" />
               )}
             </div>
             <span className="flex-1 font-medium">{snackbar.message}</span>
@@ -421,9 +407,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
               onClick={handleCloseSnackbar}
               className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <XMarkIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -436,9 +420,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
             {/* Dialog Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
               <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.46 0L4.354 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <ExclamationTriangleIcon className="w-5 h-5" />
                 診療録の削除確認
               </h3>
             </div>
@@ -471,18 +453,14 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 onClick={() => setDeleteConfirmDialog({ open: false, recordId: '', recordDate: '' })}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <XMarkIcon className="w-4 h-4" />
                 キャンセル
               </button>
               <button
                 onClick={confirmDeleteRecord}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon className="w-4 h-4" />
                 削除する
               </button>
             </div>
