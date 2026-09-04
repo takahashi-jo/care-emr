@@ -5,6 +5,7 @@ import ModalHeader from './common/ModalHeader';
 import { residentService, medicationService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
+import { useAuth } from '../hooks/useAuth';
 import { logger } from '../services/logger';
 import type { Resident } from '../types';
 import MedicalRecordsManager from './MedicalRecordsManager';
@@ -60,6 +61,8 @@ const SearchPanel = () => {
   // 統合エラーハンドリングとパフォーマンス監視
   const { handleFirestoreError } = useErrorHandler();
   const { measureAsyncOperation, measureInteraction } = usePerformanceMonitor('SearchPanel');
+  const { user } = useAuth();
+  const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const getCurrentSearchValue = () => {
     switch (searchType) {
@@ -199,7 +202,7 @@ const SearchPanel = () => {
       });
 
       await measureAsyncOperation(
-        () => residentService.delete(resident.id),
+        () => residentService.delete(resident.id, author),
         'delete_resident'
       );
 
@@ -577,6 +580,12 @@ const SearchPanel = () => {
                   </span>
                 </div>
               </div>
+              {viewingResident.allergies && (
+                <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <label className="block text-sm font-medium text-red-700 mb-1">アレルギー</label>
+                  <p className="text-red-800 font-medium">{viewingResident.allergies}</p>
+                </div>
+              )}
               {viewingResident.medicalHistory && (
                 <div>
                   <hr className="my-4 border-gray-200" />
@@ -628,15 +637,10 @@ const SearchPanel = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-red-700 font-medium mb-2">
-                  ⚠️ 重要な注意事項
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800">
+                  真正性のため物理削除はしません。一覧から非表示になりますが、診療録・投薬を含む記録は保持されます（誰が削除したかも記録されます）。
                 </p>
-                <ul className="text-sm text-red-600 space-y-1">
-                  <li>• この操作は取り消すことができません</li>
-                  <li>• 診療録も含めて完全に削除されます</li>
-                  <li>• すべての関連データが失われます</li>
-                </ul>
               </div>
             </div>
 

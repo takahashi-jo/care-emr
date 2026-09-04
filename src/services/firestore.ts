@@ -52,7 +52,12 @@ const convertResidentData = (id: string, data: Record<string, unknown>): Residen
     admissionDate: convertTimestampToDate(data.admissionDate),
     dischargeDate: data.dischargeDate ? convertTimestampToDate(data.dischargeDate) : undefined,
     medicalHistory: String(data.medicalHistory || ''),
+    allergies: data.allergies ? String(data.allergies) : undefined,
     careLevel: data.careLevel as 1 | 2 | 3 | 4 | 5,
+    createdBy: (data.createdBy as RecordAuthor) || undefined,
+    updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+    deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+    deletedBy: (data.deletedBy as RecordAuthor) || undefined,
     createdAt: convertTimestampToDate(data.createdAt),
     updatedAt: convertTimestampToDate(data.updatedAt)
   };
@@ -116,7 +121,9 @@ export const residentService = {
         query(collection(db, COLLECTIONS.RESIDENTS), orderBy('name'))
       );
 
-      const residents = querySnapshot.docs.map(doc => convertResidentData(doc.id, doc.data()));
+      const residents = querySnapshot.docs
+        .map(doc => convertResidentData(doc.id, doc.data()))
+        .filter(r => !r.deletedAt); // 論理削除は除外
 
       logger.info('Successfully fetched residents', {
         component: 'firestore',
@@ -141,7 +148,7 @@ export const residentService = {
     return null;
   },
 
-  async create(data: ResidentFormData): Promise<string> {
+  async create(data: ResidentFormData, author: RecordAuthor): Promise<string> {
     try {
       logger.info('Creating new resident', {
         component: 'firestore',
@@ -167,7 +174,11 @@ export const residentService = {
         admissionDate: Timestamp.fromDate(new Date(data.admissionDate)),
         dischargeDate: data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null,
         medicalHistory: data.medicalHistory,
+        allergies: data.allergies || '',
         careLevel: data.careLevel,
+        createdBy: author,
+        updatedBy: author,
+        deletedAt: null,
         createdAt: now,
         updatedAt: now
       });
@@ -188,9 +199,10 @@ export const residentService = {
     }
   },
 
-  async update(id: string, data: Partial<ResidentFormData>): Promise<void> {
-    const updateData: Record<string, FieldValue | string | number | string[] | Date | null> = {
-      updatedAt: Timestamp.now()
+  async update(id: string, data: Partial<ResidentFormData>, author: RecordAuthor): Promise<void> {
+    const updateData: Record<string, FieldValue | string | number | Date | null | RecordAuthor> = {
+      updatedAt: Timestamp.now(),
+      updatedBy: author
     };
 
     if (data.name !== undefined) {
@@ -213,13 +225,20 @@ export const residentService = {
       updateData.dischargeDate = data.dischargeDate ? Timestamp.fromDate(new Date(data.dischargeDate)) : null;
     }
     if (data.medicalHistory !== undefined) updateData.medicalHistory = data.medicalHistory;
+    if (data.allergies !== undefined) updateData.allergies = data.allergies;
     if (data.careLevel !== undefined) updateData.careLevel = data.careLevel;
 
     await updateDoc(doc(db, COLLECTIONS.RESIDENTS, id), updateData);
   },
 
-  async delete(id: string): Promise<void> {
-    await deleteDoc(doc(db, COLLECTIONS.RESIDENTS, id));
+  // 論理削除（物理削除しない。紐づく診療録・投薬を保持し真正性を守るため）
+  async delete(id: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(doc(db, COLLECTIONS.RESIDENTS, id), {
+      deletedAt: Timestamp.now(),
+      deletedBy: author,
+      updatedAt: Timestamp.now(),
+      updatedBy: author
+    });
   },
 
   // ひらがな→カタカナ変換

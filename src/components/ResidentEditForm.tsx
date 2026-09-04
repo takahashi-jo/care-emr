@@ -5,6 +5,7 @@ import { residentService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
+import { useAuth } from '../hooks/useAuth';
 import type { Resident, ResidentFormData } from '../types';
 import ModalShell from './common/ModalShell';
 import ModalHeader from './common/ModalHeader';
@@ -28,6 +29,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
     admissionDate: dayjs(resident.admissionDate).format('YYYY-MM-DD'),
     dischargeDate: resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY-MM-DD') : '',
     medicalHistory: resident.medicalHistory,
+    allergies: resident.allergies || '',
     careLevel: resident.careLevel,
   });
 
@@ -41,6 +43,8 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
 
   const { handleFirestoreError } = useErrorHandler();
   const { measureAsyncOperation, measureInteraction } = usePerformanceMonitor('ResidentEditForm');
+  const { user } = useAuth();
+  const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const handleInputChange = (field: keyof ResidentFormData) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -75,7 +79,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
         formData: { name: formData.name, roomNumber: formData.roomNumber, careLevel: formData.careLevel },
       });
 
-      await measureAsyncOperation(() => residentService.update(resident.id, formData), 'update_resident');
+      await measureAsyncOperation(() => residentService.update(resident.id, formData, author), 'update_resident');
 
       logger.userAction('resident_updated_success', {
         component: 'ResidentEditForm',
@@ -154,6 +158,10 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
                 </Select>
               </FormField>
             </div>
+
+            <FormField label="アレルギー" help="薬剤・食物アレルギー等。無ければ空欄">
+              <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+            </FormField>
 
             <FormField label="既往歴">
               <Textarea value={formData.medicalHistory} rows={4} placeholder="既往歴や医療情報を入力してください" onChange={handleInputChange('medicalHistory')} />

@@ -43,6 +43,7 @@ const notes = [
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const pickN = (a, n) => [...a].sort(() => 0.5 - Math.random()).slice(0, n);
+const SEED_AUTHOR = { uid: 'seed', name: '初期データ' };
 
 const MED_PRESETS = [
   { name: 'アムロジピン錠5mg', dosage: '1錠', frequency: '1日1回 朝食後', route: '経口', type: '定期' },
@@ -124,7 +125,11 @@ function buildResident() {
     admissionDate: Timestamp.fromDate(admission),
     dischargeDate: null,
     medicalHistory: pickN(histories, 1 + Math.floor(Math.random() * 3)).join('、'),
+    allergies: Math.random() < 0.3 ? pick(['ペニシリン', 'そば', '卵', 'ヨード']) : '',
     careLevel: 1 + Math.floor(Math.random() * 5),
+    createdBy: SEED_AUTHOR,
+    updatedBy: SEED_AUTHOR,
+    deletedAt: null,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   };

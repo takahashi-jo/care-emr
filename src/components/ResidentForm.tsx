@@ -5,6 +5,7 @@ import { residentService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 import { logger } from '../services/logger';
+import { useAuth } from '../hooks/useAuth';
 import type { ResidentFormData } from '../types';
 import Button from './common/Button';
 import FormField from './common/FormField';
@@ -19,6 +20,7 @@ const EMPTY: ResidentFormData = {
   admissionDate: '',
   dischargeDate: '',
   medicalHistory: '',
+  allergies: '',
   careLevel: 1,
 };
 
@@ -30,6 +32,8 @@ const ResidentForm = () => {
 
   const { handleFirestoreError } = useErrorHandler();
   const { measureAsyncOperation, measureInteraction } = usePerformanceMonitor('ResidentForm');
+  const { user } = useAuth();
+  const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const convertSpacesToFullWidth = (text: string): string => text.replace(/ /g, '　');
 
@@ -67,7 +71,7 @@ const ResidentForm = () => {
         formData: { name: formData.name, roomNumber: formData.roomNumber, careLevel: formData.careLevel },
       });
 
-      await measureAsyncOperation(() => residentService.create(formData), 'create_resident');
+      await measureAsyncOperation(() => residentService.create(formData, author), 'create_resident');
 
       setAlert({ show: true, message: '入所者情報を正常に登録しました', type: 'success' });
       logger.userAction('resident_created_success', {
@@ -190,8 +194,12 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
+            <FormField label="アレルギー" htmlFor="allergies" help="薬剤・食物アレルギー等。無ければ空欄">
+              <TextInput id="allergies" value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+            </FormField>
+
             <FormField label="既往歴・医療情報" htmlFor="medicalHistory">
-              <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder="既往歴、アレルギー、注意事項など" onChange={handleInputChange('medicalHistory')} />
+              <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder="既往歴、注意事項など" onChange={handleInputChange('medicalHistory')} />
             </FormField>
 
             <div className="flex flex-wrap gap-3 justify-end">

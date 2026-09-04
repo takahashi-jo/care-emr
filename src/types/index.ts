@@ -12,7 +12,12 @@ export interface Resident {
   admissionDate: Date;
   dischargeDate?: Date;
   medicalHistory: string;
+  allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +58,7 @@ export interface ResidentFormData {
   admissionDate: string;
   dischargeDate?: string;
   medicalHistory: string;
+  allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
 }
 
