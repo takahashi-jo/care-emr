@@ -171,17 +171,21 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
           <ModalHeader
             title={`${resident.name}さんの投薬`}
-            subtitle={`継続中 ${activeCount} 件 / 全 ${medications.length} 件`}
+            subtitle={`${resident.gender} • ${dayjs().diff(dayjs(resident.birthDate), 'year')}歳 • 部屋${resident.roomNumber}`}
             icon={BeakerIcon}
             onClose={onClose}
           />
 
           {/* Content */}
           <div className="p-6 max-h-[calc(90vh-180px)] overflow-y-auto">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-semibold text-gray-800">投薬一覧</h3>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">継続中 {activeCount} / 全 {medications.length}</span>
+              </div>
               <button
                 onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
               >
                 <PlusIcon className="w-5 h-5" />
                 投薬を追加

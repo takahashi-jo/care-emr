@@ -231,7 +231,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                         {currentRecords.map((record) => (
                           <tr key={record.id} className="hover:bg-gray-50 transition-colors duration-200">
                             <td className="px-6 py-4 w-40">
-                              <div className="text-sm font-medium text-blue-600">
+                              <div className="text-sm font-medium text-blue-600 whitespace-nowrap">
                                 {dayjs(record.date).format('YYYY年MM月DD日')}
                               </div>
                               <div className="text-xs text-gray-500">
