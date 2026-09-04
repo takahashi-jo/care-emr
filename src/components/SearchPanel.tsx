@@ -780,7 +780,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
         message={deleteConfirmDialog.resident
           ? `${deleteConfirmDialog.resident.name}さん（部屋${deleteConfirmDialog.resident.roomNumber} / ${calculateAge(deleteConfirmDialog.resident.birthDate)}歳 / 要介護${deleteConfirmDialog.resident.careLevel}）を削除しますか？`
           : ''}
-        note="真正性のため物理削除はしません。一覧から非表示になりますが、診療録・投薬を含む記録は保持されます（誰が削除したかも記録されます）。"
+        note="削除しても、診療録・投薬を含む記録は法定保存・監査のため残ります。一覧からは非表示になり、削除した人と日時が記録されます。"
         confirmButtonText="削除する"
         confirmButtonVariant="danger"
         onConfirm={confirmDeleteResident}

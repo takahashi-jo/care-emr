@@ -424,7 +424,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
         isOpen={deleteConfirm.open && !!deleteConfirm.vital}
         title="バイタルの削除確認"
         message={deleteConfirm.vital ? `${dayjs(deleteConfirm.vital.measuredAt).format('YYYY年MM月DD日 HH:mm')}（${resident.name}さん）のバイタル記録を削除しますか？` : ''}
-        note="真正性のため物理削除はしません。一覧からは非表示になりますが、記録は保持されます（誰が削除したかも記録されます）。"
+        note="削除しても、法定保存・監査のため記録は残ります。一覧からは非表示になり、削除した人と日時が記録されます。"
         confirmButtonText="削除する"
         confirmButtonVariant="danger"
         onConfirm={confirmDelete}

@@ -340,7 +340,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
             ? `「#${confirm.problem?.number} ${confirm.problem?.title}」を本日付で消失にしますか？（記録は残ります）`
             : `「#${confirm.problem?.number} ${confirm.problem?.title}」を削除しますか？入力誤りの取り消し用です。治癒・消失は「消失にする」を使ってください。`
         }
-        note={confirm.kind === 'delete' ? '真正性のため物理削除はしません。一覧からは非表示になりますが、記録は保持されます（誰が削除したかも記録されます）。' : undefined}
+        note={confirm.kind === 'delete' ? '削除しても、法定保存・監査のため記録は残ります。一覧からは非表示になり、削除した人と日時が記録されます。' : undefined}
         confirmButtonText={confirm.kind === 'resolve' ? '消失にする' : '削除する'}
         cancelButtonText="キャンセル"
         confirmButtonVariant={confirm.kind === 'resolve' ? 'primary' : 'danger'}
