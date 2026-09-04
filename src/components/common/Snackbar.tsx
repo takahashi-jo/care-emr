@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface SnackbarProps {
@@ -9,6 +10,7 @@ interface SnackbarProps {
 
 // 画面上部中央に出す通知トースト（全モーダル・画面で共通利用）
 const Snackbar = ({ open, message, severity, onClose }: SnackbarProps) => {
+  const { t } = useTranslation();
   if (!open) return null;
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
@@ -24,7 +26,7 @@ const Snackbar = ({ open, message, severity, onClose }: SnackbarProps) => {
         <button
           onClick={onClose}
           className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
-          aria-label="閉じる"
+          aria-label={t('common.close')}
         >
           <XMarkIcon className="w-4 h-4" />
         </button>

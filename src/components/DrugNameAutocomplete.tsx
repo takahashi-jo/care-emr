@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { drugMasterService } from '../services/firestore';
 import type { DrugMasterItem } from '../types';
 
@@ -10,6 +11,7 @@ interface DrugNameAutocompleteProps {
 }
 
 const DrugNameAutocomplete = ({ value, onChange, placeholder }: DrugNameAutocompleteProps) => {
+  const { t } = useTranslation();
   const [results, setResults] = useState<DrugMasterItem[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ const DrugNameAutocomplete = ({ value, onChange, placeholder }: DrugNameAutocomp
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
       {loading && (
-        <div className="absolute right-3 top-2.5 text-xs text-gray-400">検索中…</div>
+        <div className="absolute right-3 top-2.5 text-xs text-gray-400">{t('common.searching')}</div>
       )}
       {open && results.length > 0 && (
         <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">

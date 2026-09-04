@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { UserIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { residentService } from '../services/firestore';
@@ -33,13 +34,14 @@ const ResidentForm = () => {
   const { handleFirestoreError } = useErrorHandler();
   const { measureAsyncOperation, measureInteraction } = usePerformanceMonitor('ResidentForm');
   const { user } = useAuth();
+  const { t } = useTranslation();
   const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const convertSpacesToFullWidth = (text: string): string => text.replace(/ /g, '　');
 
   const validateRoomNumber = (roomNumber: string): string => {
     if (!roomNumber) return '';
-    if (!/^[0-9]+$/.test(roomNumber)) return '部屋番号は半角数字のみで入力してください';
+    if (!/^[0-9]+$/.test(roomNumber)) return t('resident.roomError');
     return '';
   };
 
@@ -73,7 +75,7 @@ const ResidentForm = () => {
 
       await measureAsyncOperation(() => residentService.create(formData, author), 'create_resident');
 
-      setAlert({ show: true, message: '入所者情報を正常に登録しました', type: 'success' });
+      setAlert({ show: true, message: t('resident.createdOk'), type: 'success' });
       logger.userAction('resident_created_success', {
         component: 'ResidentForm',
         residentName: formData.name,
@@ -121,50 +123,50 @@ const ResidentForm = () => {
         <div className="p-6">
           <div className="flex items-center gap-2 mb-6">
             <UserIcon className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">新規入所者登録</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('resident.newTitle')}</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FormField label="氏名" htmlFor="name" required help="※スペースは自動的に全角に変換されます">
+              <FormField label={t('resident.name')} htmlFor="name" required help={t('resident.spaceNote')}>
                 <TextInput
                   id="name"
                   value={formData.name}
                   required
-                  placeholder="例: 山田　太郎"
+                  placeholder={t('resident.phName')}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: convertSpacesToFullWidth(e.target.value) }))}
                 />
               </FormField>
-              <FormField label="フリガナ" htmlFor="furigana" required help="※スペースは自動的に全角に変換されます">
+              <FormField label={t('resident.furigana')} htmlFor="furigana" required help={t('resident.spaceNote')}>
                 <TextInput
                   id="furigana"
                   value={formData.furigana}
                   required
-                  placeholder="例: ヤマダ　タロウ"
+                  placeholder={t('resident.phFurigana')}
                   onChange={(e) => setFormData(prev => ({ ...prev, furigana: convertSpacesToFullWidth(e.target.value) }))}
                 />
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FormField label="性別" htmlFor="gender" required>
+              <FormField label={t('resident.gender')} htmlFor="gender" required>
                 <Select id="gender" value={formData.gender} required onChange={handleInputChange('gender')}>
-                  <option value="男性">男性</option>
-                  <option value="女性">女性</option>
+                  <option value="男性">{t('resident.male')}</option>
+                  <option value="女性">{t('resident.female')}</option>
                 </Select>
               </FormField>
-              <FormField label="生年月日" htmlFor="birthDate" required help={formData.birthDate ? `満年齢: ${calculateAge(formData.birthDate)}歳` : undefined}>
+              <FormField label={t('resident.birthDate')} htmlFor="birthDate" required help={formData.birthDate ? t('resident.ageLabel', { age: calculateAge(formData.birthDate) }) : undefined}>
                 <TextInput type="date" id="birthDate" value={formData.birthDate} required onChange={handleInputChange('birthDate')} />
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FormField label="部屋番号" htmlFor="roomNumber" required error={roomNumberError} help="※半角数字のみで入力してください">
+              <FormField label={t('resident.room')} htmlFor="roomNumber" required error={roomNumberError} help={t('resident.roomNote')}>
                 <TextInput
                   id="roomNumber"
                   value={formData.roomNumber}
                   required
-                  placeholder="例: 101"
+                  placeholder={t('resident.phRoom')}
                   error={!!roomNumberError}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -173,54 +175,54 @@ const ResidentForm = () => {
                   }}
                 />
               </FormField>
-              <FormField label="要介護度" htmlFor="careLevel" required>
+              <FormField label={t('resident.careLevel')} htmlFor="careLevel" required>
                 <Select id="careLevel" value={formData.careLevel} required onChange={handleInputChange('careLevel')}>
-                  <option value={1}>要介護1</option>
-                  <option value={2}>要介護2</option>
-                  <option value={3}>要介護3</option>
-                  <option value={4}>要介護4</option>
-                  <option value={5}>要介護5</option>
+                  <option value={1}>{t('resident.careLevelOption', { n: 1 })}</option>
+                  <option value={2}>{t('resident.careLevelOption', { n: 2 })}</option>
+                  <option value={3}>{t('resident.careLevelOption', { n: 3 })}</option>
+                  <option value={4}>{t('resident.careLevelOption', { n: 4 })}</option>
+                  <option value={5}>{t('resident.careLevelOption', { n: 5 })}</option>
                 </Select>
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FormField label="入所日" htmlFor="admissionDate" required>
+              <FormField label={t('resident.admissionDate')} htmlFor="admissionDate" required>
                 <TextInput type="date" id="admissionDate" value={formData.admissionDate} required onChange={handleInputChange('admissionDate')} />
               </FormField>
-              <FormField label="退所日（任意）" htmlFor="dischargeDate">
+              <FormField label={t('resident.dischargeDate')} htmlFor="dischargeDate">
                 <TextInput type="date" id="dischargeDate" value={formData.dischargeDate || ''} onChange={handleInputChange('dischargeDate')} />
               </FormField>
             </div>
 
-            <FormField label="アレルギー" required>
+            <FormField label={t('resident.allergy')} required>
               <div className="flex items-center gap-6 py-1">
                 <label className="flex items-center gap-1.5 text-sm text-gray-800">
                   <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'なし'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'なし', allergies: '' }))} />
-                  なし
+                  {t('resident.allergyNone')}
                 </label>
                 <label className="flex items-center gap-1.5 text-sm text-gray-800">
                   <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'あり'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'あり' }))} />
-                  あり
+                  {t('resident.allergyPresent')}
                 </label>
               </div>
             </FormField>
             {formData.allergyStatus === 'あり' && (
-              <FormField label="アレルゲン" required>
-                <TextInput value={formData.allergies || ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+              <FormField label={t('resident.allergen')} required>
+                <TextInput value={formData.allergies || ''} placeholder={t('resident.phAllergen')} onChange={handleInputChange('allergies')} />
               </FormField>
             )}
 
-            <FormField label="既往歴・医療情報" htmlFor="medicalHistory">
-              <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder="既往歴、注意事項など" onChange={handleInputChange('medicalHistory')} />
+            <FormField label={t('resident.medicalHistory')} htmlFor="medicalHistory">
+              <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
             </FormField>
 
             <div className="flex flex-wrap gap-3 justify-end">
               <Button type="button" variant="secondary" icon={ArrowPathIcon} onClick={resetForm} disabled={loading}>
-                リセット
+                {t('common.reset')}
               </Button>
               <Button type="submit" icon={CheckIcon} disabled={loading || !isFormValid()}>
-                {loading ? '登録中...' : '登録'}
+                {loading ? t('common.registering') : t('common.register')}
               </Button>
             </div>
           </form>

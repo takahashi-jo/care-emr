@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { PencilIcon, XMarkIcon, CheckIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { residentService } from '../services/firestore';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
@@ -9,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { Resident, ResidentFormData, AllergyStatus } from '../types';
 import ModalShell from './common/ModalShell';
 import ModalHeader from './common/ModalHeader';
+import Snackbar from './common/Snackbar';
 import Button from './common/Button';
 import FormField from './common/FormField';
 import { TextInput, Select, Textarea } from './common/FormControls';
@@ -45,6 +47,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
   const { handleFirestoreError } = useErrorHandler();
   const { measureAsyncOperation, measureInteraction } = usePerformanceMonitor('ResidentEditForm');
   const { user } = useAuth();
+  const { t } = useTranslation();
   const author = { uid: user?.uid ?? '', name: user?.displayName ?? user?.email ?? '不明' };
 
   const handleInputChange = (field: keyof ResidentFormData) => (
@@ -88,7 +91,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
         residentName: formData.name,
       });
 
-      setSnackbar({ open: true, message: '入所者情報が正常に更新されました', severity: 'success' });
+      setSnackbar({ open: true, message: t('resident.updatedOk'), severity: 'success' });
       setTimeout(() => setSnackbar(prev => ({ ...prev, open: false })), 4000);
       setTimeout(() => onComplete(), 1000);
     } catch (error: unknown) {
@@ -119,99 +122,88 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
   return (
     <>
       <ModalShell maxWidth="max-w-4xl">
-        <ModalHeader title={`${resident.name}さんの情報編集`} icon={PencilIcon} onClose={onCancel} />
+        <ModalHeader title={t('resident.editTitle', { name: resident.name })} icon={PencilIcon} onClose={onCancel} />
 
         <div className="p-6 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="氏名" required>
+              <FormField label={t('resident.name')} required>
                 <TextInput value={formData.name} required onChange={handleInputChange('name')} />
               </FormField>
-              <FormField label="フリガナ" required>
+              <FormField label={t('resident.furigana')} required>
                 <TextInput value={formData.furigana} required onChange={handleInputChange('furigana')} />
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="性別" required>
+              <FormField label={t('resident.gender')} required>
                 <Select value={formData.gender} required onChange={handleInputChange('gender')}>
-                  <option value="">性別を選択</option>
-                  <option value="男性">男性</option>
-                  <option value="女性">女性</option>
+                  <option value="男性">{t('resident.male')}</option>
+                  <option value="女性">{t('resident.female')}</option>
                 </Select>
               </FormField>
-              <FormField label="生年月日" required help={formData.birthDate ? `満年齢: ${calculateAge(formData.birthDate)}歳` : undefined}>
+              <FormField label={t('resident.birthDate')} required help={formData.birthDate ? t('resident.ageLabel', { age: calculateAge(formData.birthDate) }) : undefined}>
                 <TextInput type="date" value={birthDateValue} required onChange={handleDateChange('birthDate')} />
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="部屋番号" required>
+              <FormField label={t('resident.room')} required>
                 <TextInput value={formData.roomNumber} required onChange={handleInputChange('roomNumber')} />
               </FormField>
-              <FormField label="要介護度" required>
+              <FormField label={t('resident.careLevel')} required>
                 <Select value={formData.careLevel || 1} required onChange={handleInputChange('careLevel')}>
-                  <option value={1}>要介護1</option>
-                  <option value={2}>要介護2</option>
-                  <option value={3}>要介護3</option>
-                  <option value={4}>要介護4</option>
-                  <option value={5}>要介護5</option>
+                  <option value={1}>{t('resident.careLevelOption', { n: 1 })}</option>
+                  <option value={2}>{t('resident.careLevelOption', { n: 2 })}</option>
+                  <option value={3}>{t('resident.careLevelOption', { n: 3 })}</option>
+                  <option value={4}>{t('resident.careLevelOption', { n: 4 })}</option>
+                  <option value={5}>{t('resident.careLevelOption', { n: 5 })}</option>
                 </Select>
               </FormField>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="入所日" required>
+              <FormField label={t('resident.admissionDate')} required>
                 <TextInput type="date" value={admissionDateValue} required onChange={handleDateChange('admissionDate')} />
               </FormField>
-              <FormField label="退所日（任意）">
+              <FormField label={t('resident.dischargeDate')}>
                 <TextInput type="date" value={dischargeDateValue} onChange={handleDateChange('dischargeDate')} />
               </FormField>
             </div>
 
-            <FormField label="アレルギー" required>
+            <FormField label={t('resident.allergy')} required>
               <Select
                 value={formData.allergyStatus || '未確認'}
                 onChange={(e) => setFormData(prev => ({ ...prev, allergyStatus: e.target.value as AllergyStatus, allergies: e.target.value === 'あり' ? prev.allergies : '' }))}
               >
-                <option value="未確認">未確認</option>
-                <option value="なし">なし</option>
-                <option value="あり">あり</option>
+                <option value="未確認">{t('resident.allergyUnknown')}</option>
+                <option value="なし">{t('resident.allergyNone')}</option>
+                <option value="あり">{t('resident.allergyPresent')}</option>
               </Select>
             </FormField>
             {formData.allergyStatus === 'あり' && (
-              <FormField label="アレルゲン" required error={(formData.allergies || '').trim() === '' ? 'アレルゲンを入力してください' : undefined}>
-                <TextInput value={formData.allergies || ''} required error={(formData.allergies || '').trim() === ''} placeholder="例: ペニシリン、そば" onChange={handleInputChange('allergies')} />
+              <FormField label={t('resident.allergen')} required error={(formData.allergies || '').trim() === '' ? t('resident.allergenRequired') : undefined}>
+                <TextInput value={formData.allergies || ''} required error={(formData.allergies || '').trim() === ''} placeholder={t('resident.phAllergen')} onChange={handleInputChange('allergies')} />
               </FormField>
             )}
 
-            <FormField label="既往歴・医療情報">
-              <Textarea value={formData.medicalHistory} rows={4} placeholder="既往歴や医療情報を入力してください" onChange={handleInputChange('medicalHistory')} />
+            <FormField label={t('resident.medicalHistory')}>
+              <Textarea value={formData.medicalHistory} rows={4} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
             </FormField>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <Button type="button" variant="secondary" icon={XMarkIcon} onClick={onCancel} disabled={loading}>
-                キャンセル
+                {t('common.cancel')}
               </Button>
               <Button type="submit" icon={CheckIcon} disabled={loading || !isFormValid()}>
-                {loading ? '更新中...' : '更新'}
+                {loading ? t('common.updating') : t('common.update')}
               </Button>
             </div>
           </form>
         </div>
       </ModalShell>
 
-      {snackbar.open && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[110]">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${snackbar.severity === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
-            {snackbar.severity === 'success' ? <CheckCircleIcon className="w-5 h-5 shrink-0" /> : <XCircleIcon className="w-5 h-5 shrink-0" />}
-            <span className="flex-1 font-medium">{snackbar.message}</span>
-            <button onClick={handleCloseSnackbar} className="shrink-0 text-current hover:opacity-70 transition-opacity" aria-label="閉じる">
-              <XMarkIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Snackbar open={snackbar.open} message={snackbar.message} severity={snackbar.severity} onClose={handleCloseSnackbar} />
     </>
   );
 };

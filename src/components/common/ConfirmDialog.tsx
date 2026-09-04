@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface ConfirmDialogProps {
@@ -18,13 +19,17 @@ const ConfirmDialog = ({
   title,
   message,
   note,
-  confirmButtonText = '確認',
-  cancelButtonText = 'キャンセル',
+  confirmButtonText,
+  cancelButtonText,
   confirmButtonVariant = 'primary',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
+
+  const confirmLabel = confirmButtonText ?? t('common.confirm');
+  const cancelLabel = cancelButtonText ?? t('common.cancel');
 
   const confirmButtonClass = confirmButtonVariant === 'danger'
     ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
@@ -73,13 +78,13 @@ const ConfirmDialog = ({
               onClick={onCancel}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
             >
-              {cancelButtonText}
+              {cancelLabel}
             </button>
             <button
               onClick={onConfirm}
               className={`px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${confirmButtonClass}`}
             >
-              {confirmButtonText}
+              {confirmLabel}
             </button>
           </div>
         </div>
