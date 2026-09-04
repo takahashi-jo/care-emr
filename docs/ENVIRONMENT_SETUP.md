@@ -4,14 +4,14 @@
 
 CareEMRアプリケーションは環境変数を使用してFirebase設定やその他の外部サービス設定を管理しています。開発環境（local）と本番環境（production）の2つの環境での設定方法を説明します。
 
-## 🔑 Firebase API Key について
+## Firebase API Key について
 
 Firebase API Keyは **Gitにコミット可能** です：
 - クライアントサイドアプリでは必然的に公開される仕様
 - API Keyは「識別子」であり「秘密鍵」ではない
 - セキュリティはFirestore Security Rulesで制御
 
-## 📋 必要な環境変数
+## 必要な環境変数
 
 ### Firebase設定
 ```
@@ -37,7 +37,7 @@ VITE_DEBUG_ENABLED=true|false
 VITE_GOOGLE_FONTS_URL=https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap
 ```
 
-## 🚀 セットアップ手順
+## セットアップ手順
 
 ### 1. 開発環境
 
@@ -56,7 +56,7 @@ cp .env.example .env.development
 2. 本番用Firebase プロジェクトの設定を入力
 3. `VITE_DEBUG_ENABLED=false` に設定
 
-## 🔒 セキュリティ
+## セキュリティ
 
 ### 環境変数の取り扱い
 - **開発環境**: `.env.development` はGitにコミット済み
@@ -69,7 +69,7 @@ cp .env.example .env.development
 - セキュリティはFirestore Security Rulesで制御
 - 管理者認証はFirebase Admin SDKのカスタムクレームで制御
 
-## 🛠 Firebase App Hosting での設定
+## Firebase App Hosting での設定
 
 `apphosting.yaml` で環境変数を設定：
 
@@ -83,7 +83,7 @@ runConfig:
     # 他の環境変数...
 ```
 
-## 🧪 テスト
+## テスト
 
 環境変数が正しく設定されているかテスト：
 
@@ -95,7 +95,7 @@ npm run dev
 npm run build
 ```
 
-## ❌ トラブルシューティング
+## トラブルシューティング
 
 ### よくあるエラー
 
@@ -117,7 +117,7 @@ npm run build
 2. ブラウザのコンソールでログを確認
 3. ネットワークタブでリクエストを確認
 
-## 📚 関連ファイル
+## 関連ファイル
 
 - `src/config/env.ts` - 環境変数管理
 - `src/utils/fonts.ts` - フォント読み込み

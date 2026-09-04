@@ -1,8 +1,8 @@
-# 🔍 Firebase ベストプラクティス ロギングシステム
+# Firebase ベストプラクティス ロギングシステム
 
 介護施設電子カルテシステム「CareEMR」に実装された包括的なロギング・エラーハンドリングシステムの説明書です。
 
-## 📋 **実装概要**
+## **実装概要**
 
 ### **1. 統合ロギングサービス (`src/services/logger.ts`)**
 
@@ -130,11 +130,11 @@ const ResidentForm = () => {
 };
 ```
 
-## 🔧 **既存コードへの統合状況**
+## **既存コードへの統合状況**
 
 ### **1. 認証システム (`src/contexts/AuthContext.tsx`)**
 ```typescript
-// ✅ 実装済み
+// 実装済み
 - ログイン/ログアウトの追跡
 - 認証エラーの詳細ログ
 - アクセス拒否の監視
@@ -143,7 +143,7 @@ const ResidentForm = () => {
 
 ### **2. Firestoreサービス (`src/services/firestore.ts`)**
 ```typescript
-// ✅ 実装済み
+// 実装済み
 - CRUD操作のログ記録
 - 検索クエリの監視
 - エラー発生時の詳細ログ
@@ -152,12 +152,12 @@ const ResidentForm = () => {
 
 ### **3. React フック (`src/hooks/useAuth.ts`)**
 ```typescript
-// ✅ 実装済み
+// 実装済み
 - 認証状態変更の追跡
 - エラーハンドリングの統合
 ```
 
-## 📊 **ログ出力例**
+## **ログ出力例**
 
 ### **開発環境でのコンソール出力**
 ```
@@ -192,7 +192,7 @@ Error: FirebaseError: Missing or insufficient permissions
 }
 ```
 
-## 🚀 **Firebase Console での監視**
+## **Firebase Console での監視**
 
 ### **1. Analytics Dashboard**
 - **カスタムイベント**: `app_log` でアプリケーションログを確認
@@ -204,7 +204,7 @@ Error: FirebaseError: Missing or insufficient permissions
 - **非致命的エラー**: カスタムエラーの追跡
 - **ユーザー影響分析**: エラーの影響範囲
 
-## 🔐 **セキュリティとプライバシー**
+## **セキュリティとプライバシー**
 
 ### **データ保護**
 - **個人情報の除外**: ログには個人を特定できる情報を含めない
@@ -216,7 +216,7 @@ Error: FirebaseError: Missing or insufficient permissions
 - **データ保持期間**: Firebase Analytics の自動管理
 - **削除権**: ユーザーデータ削除時のログ除外
 
-## 🎯 **本番運用での利点**
+## **本番運用での利点**
 
 ### **1. 問題の早期発見**
 - **パフォーマンス劣化の検出**
@@ -233,7 +233,7 @@ Error: FirebaseError: Missing or insufficient permissions
 - **ユーザビリティの最適化**
 - **システム安定性の向上**
 
-## 📝 **追加実装推奨項目**
+## **追加実装推奨項目**
 
 ### **短期目標**
 1. **主要コンポーネントへのパフォーマンス監視追加**

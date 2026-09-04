@@ -3,113 +3,61 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 重要
-- 回答・コーディングの際は、必ず、ベストプラクティスな設計・実装をしてください。公式ドキュメントや、よくある実装方法で。
-- 設計しなおす・コードを書き直すたびに毎回、それがアプリケーションのベストプラクティスに沿っているか、アンチパターンでないかを考えてください。べスプラでない、アンチパターンであるときは設計やコードを修正してください。
-- Firebase Hosting ではなく、Firebase App Hosting を使用している。
+- 回答・コーディングは必ずベストプラクティスで（公式ドキュメント・一般的な実装に沿う）。設計や実装を変えるたびに、べスプラか・アンチパターンでないかを点検し、必要なら直す。
+- ホスティングは Firebase Hosting ではなく **Firebase App Hosting**。
+- アイコンは自作SVGを使わず **@heroicons/react** のコンポーネントを使う。
+- UIの重複を避け、`src/components/common/` の共通部品（ModalHeader / ModalShell / Button / FormField / FormControls / ConfirmDialog / Snackbar / EmptyState / LanguageSwitcher）を使う。同種のUIは既存に揃える。
+- 表示文言はハードコードせず、`src/i18n/locales/{ja,en}.json` にキーで追加し `t()` で参照する（ja/en 両方）。
 
-## リポジトリ概要
+## 概要
 
-介護施設電子カルテシステム「CareEMR」です。2つの主要コンポーネントで構成されています：
-
-1. **emr-app** - 介護スタッフが入所者記録を管理するReactウェブアプリケーション
-2. **admin-setup** - Firebase管理タスクとユーザー管理用のNode.jsスクリプト
+介護老人保健施設（老健）の常勤医師向け電子カルテ「CareEMR」。回診を軸に、入所者管理・診療録・投薬・バイタル・プロブレムを扱う。医療記録の真正性（改ざん防止・監査）とセキュリティを重視。リポジトリ直下に `src/` を置く単一の React アプリ＋Firebase 構成。
 
 ## アーキテクチャ
 
-### フロントエンド (emr-app/)
-- **フレームワーク**: React 19 + TypeScript + Vite
-- **UIライブラリ**: Tailwind CSS
-- **認証**: Firebase Auth（GoogleサインインでポップアップフローをiPad対応）
-- **データベース**: Cloud Firestore
-- **日付処理**: Day.js（日本語ロケール）
-- **フォーム**: React Hook Form + Yup バリデーション
+- フロントエンド: React 19 + TypeScript + Vite + Tailwind CSS
+- グラフ: Recharts（バイタル推移。lazy 読み込みでコード分割）
+- 多言語: react-i18next（ja / en）
+- 認証: Firebase Auth（Google サインイン、管理者カスタムクレーム）
+- データベース: Cloud Firestore
+- ホスティング: Firebase App Hosting
 
-### バックエンドサービス
-- **認証**: Firebase Auth（カスタムクレーム使用、管理者のみアクセス）
-- **データベース**: Cloud Firestore（主要コレクション2つ）
-  - `residents` - 入所者情報とケアデータ
-  - `medicalRecords` - 入所者にリンクされた日次診療録
-- **管理者管理**: Firebase Admin SDK（ユーザープロビジョニング）
+### データモデル（Firestore）
+- `residents` — 入所者。サブコレクション `medications`（投薬）/ `vitals`（バイタル）/ `problems`（プロブレム）。
+- `medicalRecords` — 診療録（`residentId` で紐付け）。編集前スナップショットは `revisions` サブコレクションに追記。
+- `drugMaster` / `diseaseMaster` — 医薬品・病名（ICD-10）マスター（入力補完用）。
+- 真正性: 記録は論理削除（`deletedAt` / `deletedBy`）。作成メタデータはルールで不変、診療録は物理削除禁止。各記録に作成者・更新者・削除者を保持。
 
-### 主要データモデル
-- **Resident**: 個人情報、部屋割り当て、介護度（1-5）、服薬、病歴
-- **MedicalRecord**: residentIdで入所者にリンクされた日次記録
+### セキュリティ
+- Google サインイン必須。管理者クレーム（`admin: true`）を持つユーザーのみアクセス可。新規登録は無効で、管理者がアカウントを発行。
+- Firestore セキュリティルール（`firestore.rules`）で全アクセスを検証。投薬の collectionGroup 検索用に `match /{path=**}/medications/{id}` を許可。
 
-### セキュリティモデル
-- Googleサインイン（管理者カスタムクレーム必須）
-- ユーザー登録無効化 - 管理者がアカウントプロビジョニング必須
-- Firestoreセキュリティルールで管理者クレーム検証
+## 開発コマンド（Node.js 22 / mise 推奨）
 
-## よく使う開発コマンド
-
-### フロントエンド開発 (emr-app/)
 ```bash
-cd emr-app
-npm run dev          # 開発サーバー起動（Vite）
-npm run build        # 本番用ビルド（TypeScript + Vite）
-npm run start        # 静的ファイル配信（serve）
-npm run lint         # ESLintチェック
-npm run preview      # 本番ビルドプレビュー
-npm run create-test-data  # Firestoreにテストデータ生成
+npm run dev            # 開発サーバー（Vite）
+npm run build          # 型チェック＋本番ビルド
+npm run lint           # ESLint
+npm run emulators      # Firebase エミュレータ（Auth / Firestore、.emulator-data に永続化）
+npm run seed:emulator  # エミュレータへサンプルデータ投入
 ```
 
-### 管理者管理 (scripts/admin/)
-```bash
-cd scripts/admin
-npm run create-user <email> <displayName>  # 管理者クレーム付き新規ユーザー作成
-npm run set-admin <email>                  # 既存ユーザーに管理者クレーム追加
-```
-
-## 開発ワークフロー
-
-### 認証開発
-- `signInWithPopup`を使用したGoogleサインイン（ポップアップブロック対応のエラーハンドリング付き）
-- iPad対応で`prompt: 'select_account'`パラメータ設定
-- `AuthContext`で`getIdTokenResult()`経由でカスタムクレームをチェック
-- 管理者クレーム必須: `tokenResult.claims.admin === true`
-
-### データベース開発
-- 全Firestore操作は`src/services/firestore.ts`に
-- 日付処理用のTimestamp変換ユーティリティ
-- 日本語名のひらがな/カタカナ検索機能サポート
-- 入所者検索範囲: 氏名、姓/名、ふりがな、部屋番号、介護度、服薬
-
-### UI開発
-- Tailwind CSSでモダンなレスポンシブデザイン
-- 日本語ロケールサポート付きUI
-- タブベースナビゲーション: 入所者検索、新規登録
-- 日本語エラーメッセージ付きフォームバリデーション
+管理者ユーザーの発行は `scripts/admin/`（`serviceAccountKey.json` が必要、git 管理外）。
 
 ## 重要ファイル
+- `src/services/firestore.ts` — Firestore アクセス・検索・各サービス
+- `src/components/SearchPanel.tsx` — 回診一覧（入口）と各モーダルの起動
+- `src/components/*Manager.tsx` — 診療録 / 投薬 / バイタル / プロブレムの各モーダル
+- `src/types/index.ts` — 型定義
+- `src/i18n/` — 多言語リソースと設定
+- `src/firebase.ts` — Firebase クライアント設定（エミュレータ接続を含む）
+- `firestore.rules` — セキュリティルール
 
-### 設定
-- `emr-app/src/firebase.ts` - Firebaseクライアント設定
-- `scripts/admin/serviceAccountKey.json` - Firebase Admin SDKキー（git無視）
+## Firebase プロジェクト
+- プロジェクトID: `emr-system-dc60d`（本番）。ローカルはエミュレータで開発する。
 
-### コアコンポーネント
-- `src/contexts/AuthContext.tsx` - 認証状態管理
-- `src/services/firestore.ts` - データベース操作と検索ロジック
-- `src/components/SearchPanel.tsx` - メイン入所者検索インターフェース
-- `src/components/ResidentForm.tsx` - 新規入所者登録
-- `src/components/ResidentDetail.tsx` - 入所者プロフィールと診療録
-
-### 型定義
-- `src/types/index.ts` - Resident、MedicalRecord、フォームデータのTypeScriptインターフェース
-
-## Firebaseプロジェクト
-- プロジェクトID: `emr-system-dc60d`
-- Auth ドメイン: `emr-system-dc60d.firebaseapp.com`
-- アクセスには管理者クレーム必須 - 登録無効化済み
-
-## 日本語対応
-- 全UI日本語表示
-- 入所者名のふりがなサポート
-- firestoreサービス内にひらがな/カタカナ変換ユーティリティ
-- Day.js日本語ロケール（'ja'）設定
-- 介護度1-5
-
-## セキュリティ注意事項
-- サービスアカウントキーは`scripts/admin/serviceAccountKey.json`に配置必須
-- Firebase設定には公開APIキー含有（クライアントサイドアプリの正常動作）
-- ユーザー作成は管理者スクリプトのみ制限
-- 全データアクセスには有効な管理者クレーム必須
+## ドキュメント
+- `docs/LOCAL_DEV.md` — ローカル開発環境
+- `docs/REQUIREMENTS.md` — 要件とロードマップ
+- `docs/DRUG_MASTER.md` / `docs/DISEASE_MASTER.md` — マスターデータの取り込み
+- `docs/LOGGING_README.md` — ログ設計

@@ -1,207 +1,98 @@
-# CareEMR - 介護施設電子カルテシステム
+# CareEMR
 
-[![React](https://img.shields.io/badge/React-19.1-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-12.3-orange.svg)](https://firebase.google.com/)
-[![Vite](https://img.shields.io/badge/Vite-7.1-purple.svg)](https://vitejs.dev/)
+介護老人保健施設（老健）の常勤医師向けに設計した電子カルテです。回診を軸に、入所者の状態把握・診療録・投薬・バイタル・問題管理を最短の操作で回せることを目的としています。医療記録を扱うため、真正性（改ざん防止・監査）とセキュリティを重視しています。
 
-介護施設向けの現代的な電子カルテシステムです。入所者の情報管理、日次診療録の記録、検索機能を提供します。
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%7C%20Auth%20%7C%20App%20Hosting-orange.svg)](https://firebase.google.com/)
+[![Vite](https://img.shields.io/badge/Vite-7-purple.svg)](https://vite.dev/)
 
-## 📸 スクリーンショット
+## 特長
 
-### ログイン画面
-![ログイン](docs/images/screehshot-login-form.png)
+- 回診ビュー: 全入所者を部屋順で一覧し、氏名の読み・性別・年齢・要介護度・継続中の薬剤を一目で把握。氏名／部屋番号／要介護度／継続薬で絞り込み。
+- 入所者管理: 基本情報・要介護度・アレルギー（あり／なし／未確認）・既往歴。作成者・更新者と日時を記録し、削除は一覧から隠す論理削除。
+- 診療録: 日次の経過記録。編集時は編集前の内容を訂正履歴として保持し、物理削除は不可（監査対応）。
+- 投薬: 用法・用量・経路・種別を構造化。医薬品マスター（約1.8万剤、YJ／HOTコード）からの入力補完。継続・中止で処方の変遷を保持。
+- バイタル: 体温・血圧・脈拍・SpO₂・体重・血糖を時系列で記録。項目別の推移グラフに参考基準の閾値線と異常値の強調を表示。
+- プロブレムリスト（POMR）: 問題を番号付きで管理。ICD-10 対応の標準病名マスターから病名を選択し、現行・消失で経過を保持。
+- 認証: Google サインイン＋管理者カスタムクレーム。登録制で、管理者がアカウントを発行する。
+- 多言語: 日本語／英語（画面右上で切替）。
+- タブレット対応: 回診時の iPad 等での利用を想定したレスポンシブ設計。
 
-### ダッシュボード・検索画面
-![ダッシュボード](docs/images/screenshot-dashboard.png)
+## 技術スタック
 
-### 入所者登録フォーム
-![入所者登録](docs/images/screenshot-resident-form.png)
+- フロントエンド: React 19 / TypeScript / Vite / Tailwind CSS
+- グラフ: Recharts
+- 多言語: react-i18next
+- 日付処理: Day.js（日本語ロケール）
+- バックエンド: Firebase（Cloud Firestore / Authentication / App Hosting）
 
-### 入所者詳細
-![入所者詳細](docs/images/screenshot-resident-info.png)
+## データモデル（Firestore）
 
-### 診療録
-![診療録](docs/images/screenshot-medical-record.png)
+- `residents` — 入所者。サブコレクションに `medications`（投薬）・`vitals`（バイタル）・`problems`（プロブレム）。
+- `medicalRecords` — 診療録（`residentId` で入所者に紐付け）。編集前スナップショットは `revisions` サブコレクションに追記。
+- `drugMaster` / `diseaseMaster` — 医薬品・病名マスター（入力補完用）。
+- 真正性: 記録は論理削除（`deletedAt` / `deletedBy`）。作成メタデータはセキュリティルールで不変とし、診療録は物理削除を禁止。作成者・更新者・削除者を各記録に保持する。
 
-## ✨ 主な機能
+## セットアップ（ローカル開発）
 
-- **入所者管理**: 個人情報、部屋割り当て、介護度（1-5）、服薬情報、病歴の管理
-- **日次診療録**: 各入所者の日常的なケア記録と医療情報の記録
-- **高度検索**: 氏名、ふりがな、部屋番号、介護度、服薬情報による柔軟な検索
-- **セキュアな認証**: Firebase Auth + カスタムクレームによる管理者限定アクセス
-- **レスポンシブデザイン**: iPad等のタブレット端末対応
-- **日本語対応**: 完全な日本語UI、ひらがな・カタカナ検索サポート
+前提: Node.js 22、Firebase CLI。
 
-## 🏗️ アーキテクチャ
-
-### フロントエンド
-- **React 19** + **TypeScript** - モダンなReact開発
-- **Vite** - 高速な開発サーバーとビルドツール
-- **Tailwind CSS** - ユーティリティファーストのCSS
-- **React Hook Form** + **Yup** - 型安全なフォーム管理と検証
-- **Day.js** - 軽量な日付処理ライブラリ（日本語ロケール対応）
-
-### バックエンド
-- **Firebase Authentication** - セキュアなユーザー認証（Googleサインイン）
-- **Firestore Database** - NoSQLデータベース
-- **Firebase App Hosting** - 本番環境ホスティング
-
-### データモデル
-- **Residents コレクション**: 入所者の基本情報とケアデータ
-- **MedicalRecords コレクション**: 入所者にリンクされた日次診療録
-
-## 🚀 クイックスタート
-
-### 前提条件
-
-- Node.js 18.0.0 以上
-- npm または yarn
-- Firebase プロジェクトの設定
-
-### インストール
-
-1. リポジトリをクローン
 ```bash
-git clone <repository-url>
-cd emr
-```
-
-2. 依存関係をインストール
-```bash
+# 依存関係のインストール
 npm install
-```
 
-3. 環境変数を設定
-```bash
-# 環境ファイルをコピーして編集
-cp .env.example .env.development
+# Auth / Firestore エミュレータを起動（データは .emulator-data に保存）
+npm run emulators
 
-# Firebase Console から取得した設定値を .env.development に入力
-# 本番環境では .env.production を作成
-```
+# 別ターミナルでサンプルデータ（入所者・診療録・投薬・バイタル・プロブレム）を投入
+npm run seed:emulator
 
-**重要**: 環境ファイル（.env.*）にはAPIキーが含まれるため、Gitリポジトリには含まれていません。必ずFirebase Consoleから取得した実際の値を設定してください。
-
-4. 開発サーバーを起動
-```bash
+# 開発サーバー
 npm run dev
 ```
 
-## 📦 利用可能なスクリプト
+エミュレータ接続やアクセス方法の詳細は [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) を参照。
+マスターデータの取り込みは [docs/DRUG_MASTER.md](docs/DRUG_MASTER.md)（医薬品）・[docs/DISEASE_MASTER.md](docs/DISEASE_MASTER.md)（病名）を参照。
 
-### 開発
-
-```bash
-# 開発サーバー起動
-npm run dev
-
-# 本番ビルド
-npm run build
-
-# ビルドをプレビュー
-npm run preview
-
-# 静的ファイルを配信
-npm run start
-```
-
-### コード品質
+## 主なコマンド
 
 ```bash
-# ESLint実行
-npm run lint
-
-# TypeScript型チェック（package.jsonに未定義の場合は手動で実行）
-npx tsc --noEmit
+npm run dev            # 開発サーバー
+npm run build          # 型チェック＋本番ビルド
+npm run lint           # ESLint
+npm run emulators      # Firebase エミュレータ（Auth / Firestore）
+npm run seed:emulator  # エミュレータへサンプルデータ投入
 ```
 
-### データ管理
+管理者ユーザーの発行は [scripts/admin/README.md](scripts/admin/README.md) を参照。
 
-```bash
-# テストデータ作成
-npm run create-test-data
-
-# 新規管理者ユーザー作成（管理者のみローカル実行）
-# 注意: scripts/admin/ は .gitignore で除外されています
-npm run admin:create-user <email> <displayName>
-
-# 既存ユーザーに管理者権限付与（管理者のみローカル実行）
-npm run admin:set-admin <email>
-```
-
-## 🛠️ 開発環境セットアップ
-
-### Firebase設定
-
-1. Firebase コンソールでプロジェクトを作成
-2. Authentication で Google サインインを有効化
-3. Firestore データベースを作成
-4. 環境変数ファイルに設定情報を記入
-
-### 管理者セットアップ
-
-**注意**: 管理者スクリプトはセキュリティ上の理由で、パブリックリポジトリから除外されています。
-
-管理者権限が必要な場合は：
-1. Firebase コンソールから直接ユーザー管理
-2. Firebase CLI を使用
-3. 別途プライベートな管理スクリプトを作成
-
-## 🔐 セキュリティ
-
-- **認証**: Firebase Auth + カスタムクレームで管理者のみアクセス可能
-- **認可**: Firestore セキュリティルールで管理者クレーム検証
-- **データ保護**: 新規ユーザー登録は無効化、管理者による事前プロビジョニング必須
-
-## 🌏 国際化
-
-- 完全な日本語UI
-- 日本語の氏名・ふりがな検索サポート
-- ひらがな・カタカナ自動変換機能
-- Day.js日本語ロケール設定
-
-## 📁 プロジェクト構造
+## プロジェクト構成
 
 ```
-emr/
-├── src/
-│   ├── components/          # Reactコンポーネント
-│   │   ├── SearchPanel.tsx  # メイン検索インターフェース
-│   │   ├── ResidentForm.tsx # 入所者登録フォーム
-│   │   └── ResidentDetail.tsx # 入所者詳細・診療録
-│   ├── contexts/           # React Context
-│   │   └── AuthContext.tsx # 認証状態管理
-│   ├── services/           # ビジネスロジック
-│   │   └── firestore.ts    # データベース操作
-│   ├── types/              # TypeScript型定義
-│   │   └── index.ts        # メインの型定義
-│   └── utils/              # ユーティリティ関数
-├── scripts/
-│   ├── admin/              # 管理者管理スクリプト
-│   └── createTestData.js   # テストデータ生成
-├── public/                 # 静的アセット
-└── docs/                   # ドキュメント
+src/
+  components/        画面・モーダル（common/ に共通部品）
+  services/          Firestore アクセス層
+  i18n/              多言語リソース（locales/{ja,en}.json）
+  hooks/  contexts/  認証・アプリ状態
+  constants/         バイタル参考基準など
+scripts/             エミュレータ用シード・マスター取り込み・管理者スクリプト
+docs/                開発・データ・要件のドキュメント
+firestore.rules      Firestore セキュリティルール
 ```
 
-## 🤝 コントリビューション
+## セキュリティと真正性
 
-1. このリポジトリをフォーク
-2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. Pull Request を作成
+- Google サインイン必須。管理者カスタムクレーム（`admin: true`）を持つユーザーのみアクセスできる。新規登録は無効で、管理者がアカウントを発行する。
+- Firestore セキュリティルールで全アクセスを検証。診療録は物理削除を禁止し、作成メタデータは不変。記録は論理削除で保持し、削除者と日時を残す。
 
-## 📄 ライセンス
+## ドキュメント
 
-© 2025 Jo Takahashi. All rights reserved.
+- [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) — ローカル開発環境
+- [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — 要件とロードマップ
+- [docs/DRUG_MASTER.md](docs/DRUG_MASTER.md) / [docs/DISEASE_MASTER.md](docs/DISEASE_MASTER.md) — マスターデータの取り込み
+- [docs/LOGGING_README.md](docs/LOGGING_README.md) — ログ設計
 
-このソフトウェアは著作権により保護されています。
+## ライセンス
 
-## 🆘 サポート
-
-質問やサポートが必要な場合は、Issues を作成してください。
-
----
-
-**注意**: このシステムは介護施設の機密データを扱います。セキュリティベストプラクティスに従い、本番環境では適切な権限管理を行ってください。
+© 2026 Jo Takahashi. 無断転載・再配布を禁じます。
