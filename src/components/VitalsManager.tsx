@@ -89,7 +89,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
     } finally {
       setLoading(false);
     }
-  }, [resident.id]);
+  }, [resident.id, t]);
 
   useEffect(() => {
     if (open) load();

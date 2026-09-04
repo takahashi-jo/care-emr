@@ -69,7 +69,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
     } finally {
       setLoading(false);
     }
-  }, [resident.id]);
+  }, [resident.id, t]);
 
   useEffect(() => {
     if (open) {

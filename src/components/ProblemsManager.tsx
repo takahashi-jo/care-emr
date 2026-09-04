@@ -55,7 +55,7 @@ const ProblemsManager = ({ resident, open, onClose }: ProblemsManagerProps) => {
     } finally {
       setLoading(false);
     }
-  }, [resident.id]);
+  }, [resident.id, t]);
 
   useEffect(() => {
     if (open) load();

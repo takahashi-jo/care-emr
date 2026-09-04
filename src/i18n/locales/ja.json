@@ -116,7 +116,14 @@
     "deleteConfirmTitle": "投薬の削除",
     "stopConfirmMsg": "「{{name}}」を本日付で中止にしますか？（記録は残ります）",
     "deleteConfirmMsg": "「{{name}}」を削除しますか？入力誤りの取り消し用です。処方の中止は「中止」を使ってください。",
-    "stopConfirm": "中止する"
+    "stopConfirm": "中止する",
+    "typeRegular": "定期",
+    "typeAsNeeded": "頓用",
+    "routeOral": "経口",
+    "routeTopical": "外用",
+    "routePatch": "貼付",
+    "routeInjection": "注射",
+    "routeOther": "その他"
   },
   "problem": {
     "title": "{{name}}さんのプロブレムリスト",

@@ -116,7 +116,14 @@
     "deleteConfirmTitle": "Delete medication",
     "stopConfirmMsg": "Stop “{{name}}” as of today? The record is kept.",
     "deleteConfirmMsg": "Delete “{{name}}”? This is for undoing entry mistakes. To discontinue a prescription, use “Stop”.",
-    "stopConfirm": "Stop"
+    "stopConfirm": "Stop",
+    "typeRegular": "Regular",
+    "typeAsNeeded": "As needed",
+    "routeOral": "Oral",
+    "routeTopical": "Topical",
+    "routePatch": "Patch",
+    "routeInjection": "Injection",
+    "routeOther": "Other"
   },
   "problem": {
     "title": "Problem list — {{name}}",

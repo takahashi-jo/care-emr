@@ -107,7 +107,7 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
     } finally {
       setLoading(false);
     }
-  }, [resident.id]);
+  }, [resident.id, t]);
 
   useEffect(() => {
     if (open) loadMedications();
