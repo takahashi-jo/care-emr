@@ -241,9 +241,9 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                                 {record.record}
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
-                                作成: {record.createdBy?.name ?? '—'}（{dayjs(record.createdAt).format('YYYY/MM/DD HH:mm')}）
+                                作成: {record.createdBy?.name ?? '-'} ({dayjs(record.createdAt).format('YYYY/MM/DD HH:mm')})
                                 {record.updatedBy && (
-                                  <> ／ 更新: {record.updatedBy.name}（{dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm')}）</>
+                                  <> / 更新: {record.updatedBy.name} ({dayjs(record.updatedAt).format('YYYY/MM/DD HH:mm')})</>
                                 )}
                               </div>
                             </td>
@@ -483,7 +483,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                 <div className="text-xs font-medium text-blue-700 mb-1">現在の内容</div>
                 <div className="text-sm text-gray-900 whitespace-pre-wrap">{revisionView.record?.record}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  更新: {revisionView.record?.updatedBy?.name ?? '—'}（{revisionView.record ? dayjs(revisionView.record.updatedAt).format('YYYY/MM/DD HH:mm') : ''}）
+                  更新: {revisionView.record?.updatedBy?.name ?? '-'} ({revisionView.record ? dayjs(revisionView.record.updatedAt).format('YYYY/MM/DD HH:mm') : ''})
                 </div>
               </div>
               {revisionView.revisions.length === 0 ? (
@@ -494,7 +494,7 @@ const MedicalRecordsManager = ({ resident, open, onClose }: MedicalRecordsManage
                     <div className="text-xs font-medium text-gray-500 mb-1">編集前 #{revisionView.revisions.length - i}</div>
                     <div className="text-sm text-gray-800 whitespace-pre-wrap">{rev.record}</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      記録者: {rev.editedBy?.name ?? '—'}（{dayjs(rev.editedAt).format('YYYY/MM/DD HH:mm')}）
+                      記録者: {rev.editedBy?.name ?? '-'} ({dayjs(rev.editedAt).format('YYYY/MM/DD HH:mm')})
                     </div>
                   </div>
                 ))

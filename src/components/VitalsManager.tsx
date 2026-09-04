@@ -154,9 +154,9 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
   const pageItems = vitals.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
   const calculateAge = (birthDate: Date): number => dayjs().diff(dayjs(birthDate), 'year');
 
-  // 測定値セル（未測定は「—」、異常値は赤）
+  // 測定値セル（未測定は「-」、異常値は赤）
   const cell = (value: number | undefined, unit: string, abn?: (v: number) => boolean) => {
-    if (value === undefined) return <span className="text-gray-400">—</span>;
+    if (value === undefined) return <span className="text-gray-400">-</span>;
     const isAbn = abn ? abn(value) : false;
     return <span className={isAbn ? 'text-red-600 font-semibold' : 'text-gray-900'}>{value}{unit}</span>;
   };
@@ -217,17 +217,17 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                           <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">操作</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {pageItems.map((v) => (
-                          <tr key={v.id} className="hover:bg-gray-50 transition-colors duration-200">
-                            <td className="px-4 py-3 whitespace-nowrap">
+                      {pageItems.map((v) => (
+                        <tbody key={v.id} className="border-b border-gray-200 last:border-0">
+                          <tr className="hover:bg-gray-50 transition-colors duration-200">
+                            <td className="px-4 pt-3 whitespace-nowrap">
                               <div className="text-sm font-medium text-blue-600">{dayjs(v.measuredAt).format('YYYY/MM/DD')}</div>
                               <div className="text-xs text-gray-500">{dayjs(v.measuredAt).format('HH:mm')}</div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.temperature, '℃', isVitalAbnormal.temperature)}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.temperature, '℃', isVitalAbnormal.temperature)}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">
                               {v.systolicBP === undefined && v.diastolicBP === undefined ? (
-                                <span className="text-gray-400">—</span>
+                                <span className="text-gray-400">-</span>
                               ) : (
                                 <span className={
                                   (v.systolicBP !== undefined && isVitalAbnormal.systolicBP(v.systolicBP)) ||
@@ -235,24 +235,20 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                                     ? 'text-red-600 font-semibold'
                                     : 'text-gray-900'
                                 }>
-                                  {v.systolicBP ?? '—'}/{v.diastolicBP ?? '—'}
+                                  {v.systolicBP ?? '-'}/{v.diastolicBP ?? '-'}
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.pulse, '', isVitalAbnormal.pulse)}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.spo2, '%', isVitalAbnormal.spo2)}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.weight, 'kg')}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{cell(v.bloodGlucose, '')}</td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.pulse, '', isVitalAbnormal.pulse)}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.spo2, '%', isVitalAbnormal.spo2)}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.weight, 'kg')}</td>
+                            <td className="px-4 pt-3 whitespace-nowrap text-sm">{cell(v.bloodGlucose, '')}</td>
+                            <td className="px-4 pt-3">
                               <div className="text-sm text-gray-700 whitespace-pre-wrap max-w-xs line-clamp-2">
-                                {v.notes ? v.notes : <span className="text-gray-400">—</span>}
-                              </div>
-                              <div className="text-xs text-gray-400 mt-1">
-                                作成: {v.createdBy?.name ?? '—'}（{dayjs(v.createdAt).format('YYYY/MM/DD HH:mm')}）
-                                {v.updatedBy && <> ／ 更新: {v.updatedBy.name}（{dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm')}）</>}
+                                {v.notes ? v.notes : <span className="text-gray-400">-</span>}
                               </div>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 pt-3">
                               <div className="flex justify-center gap-2">
                                 <button
                                   onClick={() => openEdit(v)}
@@ -271,14 +267,16 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                               </div>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
+                          <tr>
+                            <td colSpan={9} className="px-4 pb-3 pt-1 text-xs text-gray-400">
+                              作成: {v.createdBy?.name ?? '-'} ({dayjs(v.createdAt).format('YYYY/MM/DD HH:mm')})
+                              {v.updatedBy && <> / 更新: {v.updatedBy.name} ({dayjs(v.updatedAt).format('YYYY/MM/DD HH:mm')})</>}
+                            </td>
+                          </tr>
+                        </tbody>
+                      ))}
                     </table>
                   </div>
-
-                  <p className="text-xs text-gray-400">
-                    ※ 数値の赤字は一般的な参考基準に基づく「要注意」の目安です（診断ではありません）。
-                  </p>
 
                   {totalPages > 1 && (
                     <div className="flex justify-center">

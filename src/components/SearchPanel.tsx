@@ -521,7 +521,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                         </td>
                         <td className="py-3 px-4">
                           {(medsByResident.get(resident.id) ?? []).length === 0 ? (
-                            <span className="text-sm text-gray-400">—</span>
+                            <span className="text-sm text-gray-400">-</span>
                           ) : (
                             <div className="flex flex-wrap gap-1 max-w-xs">
                               {(medsByResident.get(resident.id) ?? []).map((m) => (
@@ -697,7 +697,7 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">退所日</label>
                   <p className="text-lg font-medium text-gray-900">
-                    {viewingResident.dischargeDate ? dayjs(viewingResident.dischargeDate).format('YYYY年MM月DD日') : '—'}
+                    {viewingResident.dischargeDate ? dayjs(viewingResident.dischargeDate).format('YYYY年MM月DD日') : '-'}
                   </p>
                 </div>
               </div>
@@ -725,9 +725,9 @@ const SearchPanel = ({ active = true }: { active?: boolean }) => {
                 </div>
               )}
               <div className="mt-6 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                作成: {viewingResident.createdBy?.name ?? '—'}（{dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm')}）
+                作成: {viewingResident.createdBy?.name ?? '-'} ({dayjs(viewingResident.createdAt).format('YYYY/MM/DD HH:mm')})
                 {viewingResident.updatedBy && (
-                  <> ／ 更新: {viewingResident.updatedBy.name}（{dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm')}）</>
+                  <> / 更新: {viewingResident.updatedBy.name} ({dayjs(viewingResident.updatedAt).format('YYYY/MM/DD HH:mm')})</>
                 )}
               </div>
             </div>

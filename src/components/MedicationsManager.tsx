@@ -234,8 +234,8 @@ const MedicationsManager = ({ resident, open, onClose }: MedicationsManagerProps
                           </div>
                           {med.notes && <div className="text-xs text-gray-600 mt-1">備考: {med.notes}</div>}
                           <div className="text-xs text-gray-400 mt-1">
-                            作成: {med.createdBy?.name ?? '—'}（{dayjs(med.createdAt).format('YYYY/MM/DD HH:mm')}）
-                            {med.updatedBy && <> ／ 更新: {med.updatedBy.name}（{dayjs(med.updatedAt).format('YYYY/MM/DD HH:mm')}）</>}
+                            作成: {med.createdBy?.name ?? '-'} ({dayjs(med.createdAt).format('YYYY/MM/DD HH:mm')})
+                            {med.updatedBy && <> / 更新: {med.updatedBy.name} ({dayjs(med.updatedAt).format('YYYY/MM/DD HH:mm')})</>}
                           </div>
                         </div>
                         <div className="flex gap-1 shrink-0">

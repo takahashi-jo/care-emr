@@ -695,7 +695,7 @@ export const vitalSignService = {
   }
 };
 
-// 医薬品マスター（drugMaster コレクション）— 薬剤名のプレフィックス検索
+// 医薬品マスター（drugMaster コレクション）- 薬剤名のプレフィックス検索
 export const drugMasterService = {
   async search(prefix: string, max = 10): Promise<DrugMasterItem[]> {
     const term = prefix.trim();
