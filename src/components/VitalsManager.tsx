@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import dayjs from 'dayjs';
 import { HeartIcon, PencilIcon, PencilSquareIcon, TrashIcon, PlusIcon, XMarkIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ModalHeader from './common/ModalHeader';
@@ -6,6 +6,9 @@ import { vitalSignService } from '../services/firestore';
 import { useAuth } from '../hooks/useAuth';
 import type { Resident, VitalSign, VitalSignFormData } from '../types';
 import { isVitalAbnormal } from '../constants/vitalReference';
+
+// recharts は重いので「推移」タブを開いたときだけ読み込む（遅延ロードでコード分割）
+const VitalsTrend = lazy(() => import('./VitalsTrend'));
 
 interface VitalsManagerProps {
   resident: Resident;
@@ -53,6 +56,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
   const [vitals, setVitals] = useState<VitalSign[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [view, setView] = useState<'list' | 'trend'>('list');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<VitalSign | null>(null);
@@ -176,7 +180,20 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
             <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-semibold text-gray-800">バイタル一覧</h3>
+                  <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+                    <button
+                      onClick={() => setView('list')}
+                      className={`px-3 py-1.5 font-medium transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                      一覧
+                    </button>
+                    <button
+                      onClick={() => setView('trend')}
+                      className={`px-3 py-1.5 font-medium transition-colors border-l border-gray-300 ${view === 'trend' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                      推移
+                    </button>
+                  </div>
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{vitals.length}件</span>
                 </div>
                 <button
@@ -200,7 +217,7 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                   <p className="text-gray-600 font-medium">バイタル記録がありません</p>
                   <p className="text-sm text-gray-500 mt-1">「新規記録」から登録してください</p>
                 </div>
-              ) : (
+              ) : view === 'list' ? (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto shadow-sm">
                     <table className="w-full">
@@ -314,6 +331,14 @@ const VitalsManager = ({ resident, open, onClose }: VitalsManagerProps) => {
                     </div>
                   )}
                 </div>
+              ) : (
+                <Suspense fallback={
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  </div>
+                }>
+                  <VitalsTrend vitals={vitals} />
+                </Suspense>
               )}
             </div>
           </div>
