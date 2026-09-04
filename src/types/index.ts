@@ -1,4 +1,8 @@
 export type AllergyStatus = 'あり' | 'なし' | '未確認';
+// 障害高齢者の日常生活自立度（寝たきり度。厚労省判定基準）。'' は未評価。
+export type PhysicalIndependence = '' | 'J1' | 'J2' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+// 認知症高齢者の日常生活自立度（厚労省判定基準）。'' は未評価。
+export type DementiaIndependence = '' | '自立' | 'I' | 'IIa' | 'IIb' | 'IIIa' | 'IIIb' | 'IV' | 'M';
 
 export interface Resident {
   id: string;
@@ -17,6 +21,12 @@ export interface Resident {
   allergyStatus?: AllergyStatus;
   allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
+  physicalIndependence?: PhysicalIndependence;   // 障害高齢者の日常生活自立度
+  dementiaIndependence?: DementiaIndependence;   // 認知症高齢者の日常生活自立度
+  insuredNumber?: string;                        // 介護保険 被保険者番号
+  insurer?: string;                              // 保険者（市町村名など）
+  certValidFrom?: Date;                          // 要介護認定 有効期間 開始
+  certValidTo?: Date;                            // 要介護認定 有効期間 終了
   createdBy?: RecordAuthor;
   updatedBy?: RecordAuthor;
   deletedAt?: Date;
@@ -64,6 +74,12 @@ export interface ResidentFormData {
   allergyStatus?: AllergyStatus;
   allergies?: string;
   careLevel?: 1 | 2 | 3 | 4 | 5;
+  physicalIndependence?: PhysicalIndependence;
+  dementiaIndependence?: DementiaIndependence;
+  insuredNumber?: string;
+  insurer?: string;
+  certValidFrom?: string;
+  certValidTo?: string;
 }
 
 export interface MedicalRecordFormData {

@@ -11,6 +11,7 @@ import type { ResidentFormData } from '../types';
 import Button from './common/Button';
 import FormField from './common/FormField';
 import { TextInput, Select, Textarea } from './common/FormControls';
+import { PHYSICAL_INDEPENDENCE_RANKS, DEMENTIA_INDEPENDENCE_RANKS } from '../constants/independenceLevels';
 
 const EMPTY: ResidentFormData = {
   name: '',
@@ -23,6 +24,12 @@ const EMPTY: ResidentFormData = {
   medicalHistory: '',
   allergies: '',
   careLevel: 1,
+  physicalIndependence: '',
+  dementiaIndependence: '',
+  insuredNumber: '',
+  insurer: '',
+  certValidFrom: '',
+  certValidTo: '',
 };
 
 const ResidentForm = () => {
@@ -192,6 +199,39 @@ const ResidentForm = () => {
               </FormField>
               <FormField label={t('resident.dischargeDate')} htmlFor="dischargeDate">
                 <TextInput type="date" id="dischargeDate" value={formData.dischargeDate || ''} onChange={handleInputChange('dischargeDate')} />
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FormField label={t('resident.physicalIndependence')} htmlFor="physicalIndependence">
+                <Select id="physicalIndependence" value={formData.physicalIndependence || ''} onChange={handleInputChange('physicalIndependence')}>
+                  <option value="">{t('resident.independenceUnrated')}</option>
+                  {PHYSICAL_INDEPENDENCE_RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </Select>
+              </FormField>
+              <FormField label={t('resident.dementiaIndependence')} htmlFor="dementiaIndependence">
+                <Select id="dementiaIndependence" value={formData.dementiaIndependence || ''} onChange={handleInputChange('dementiaIndependence')}>
+                  <option value="">{t('resident.independenceUnrated')}</option>
+                  {DEMENTIA_INDEPENDENCE_RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </Select>
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FormField label={t('resident.insuredNumber')} htmlFor="insuredNumber">
+                <TextInput id="insuredNumber" value={formData.insuredNumber || ''} onChange={handleInputChange('insuredNumber')} />
+              </FormField>
+              <FormField label={t('resident.insurer')} htmlFor="insurer">
+                <TextInput id="insurer" value={formData.insurer || ''} onChange={handleInputChange('insurer')} />
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FormField label={t('resident.certValidFrom')} htmlFor="certValidFrom">
+                <TextInput type="date" id="certValidFrom" value={formData.certValidFrom || ''} onChange={handleInputChange('certValidFrom')} />
+              </FormField>
+              <FormField label={t('resident.certValidTo')} htmlFor="certValidTo">
+                <TextInput type="date" id="certValidTo" value={formData.certValidTo || ''} onChange={handleInputChange('certValidTo')} />
               </FormField>
             </div>
 

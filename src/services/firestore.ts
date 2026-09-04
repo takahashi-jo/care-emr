@@ -17,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem, LabResult, LabResultFormData, Immunization, ImmunizationFormData } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, PhysicalIndependence, DementiaIndependence, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem, LabResult, LabResultFormData, Immunization, ImmunizationFormData } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
@@ -67,6 +67,12 @@ const convertResidentData = (id: string, data: Record<string, unknown>): Residen
     allergyStatus: (data.allergyStatus as AllergyStatus) || (data.allergies ? 'あり' : '未確認'),
     allergies: data.allergies ? String(data.allergies) : undefined,
     careLevel: data.careLevel as 1 | 2 | 3 | 4 | 5,
+    physicalIndependence: (data.physicalIndependence as PhysicalIndependence) || '',
+    dementiaIndependence: (data.dementiaIndependence as DementiaIndependence) || '',
+    insuredNumber: data.insuredNumber ? String(data.insuredNumber) : undefined,
+    insurer: data.insurer ? String(data.insurer) : undefined,
+    certValidFrom: data.certValidFrom ? convertTimestampToDate(data.certValidFrom) : undefined,
+    certValidTo: data.certValidTo ? convertTimestampToDate(data.certValidTo) : undefined,
     createdBy: (data.createdBy as RecordAuthor) || undefined,
     updatedBy: (data.updatedBy as RecordAuthor) || undefined,
     deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
@@ -286,6 +292,12 @@ export const residentService = {
         allergyStatus: data.allergyStatus || '未確認',
         allergies: data.allergies || '',
         careLevel: data.careLevel,
+        physicalIndependence: data.physicalIndependence || '',
+        dementiaIndependence: data.dementiaIndependence || '',
+        insuredNumber: data.insuredNumber || '',
+        insurer: data.insurer || '',
+        certValidFrom: data.certValidFrom ? Timestamp.fromDate(new Date(data.certValidFrom)) : null,
+        certValidTo: data.certValidTo ? Timestamp.fromDate(new Date(data.certValidTo)) : null,
         createdBy: author,
         updatedBy: author,
         deletedAt: null,
@@ -338,6 +350,12 @@ export const residentService = {
     if (data.allergyStatus !== undefined) updateData.allergyStatus = data.allergyStatus;
     if (data.allergies !== undefined) updateData.allergies = data.allergies;
     if (data.careLevel !== undefined) updateData.careLevel = data.careLevel;
+    if (data.physicalIndependence !== undefined) updateData.physicalIndependence = data.physicalIndependence;
+    if (data.dementiaIndependence !== undefined) updateData.dementiaIndependence = data.dementiaIndependence;
+    if (data.insuredNumber !== undefined) updateData.insuredNumber = data.insuredNumber;
+    if (data.insurer !== undefined) updateData.insurer = data.insurer;
+    if (data.certValidFrom !== undefined) updateData.certValidFrom = data.certValidFrom ? Timestamp.fromDate(new Date(data.certValidFrom)) : null;
+    if (data.certValidTo !== undefined) updateData.certValidTo = data.certValidTo ? Timestamp.fromDate(new Date(data.certValidTo)) : null;
 
     await updateDoc(doc(db, COLLECTIONS.RESIDENTS, id), updateData);
   },

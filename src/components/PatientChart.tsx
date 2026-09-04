@@ -76,6 +76,25 @@ const Overview = ({ resident, onEdit, onDelete }: { resident: Resident; onEdit: 
         <Field label={t('roster.dischargeDate')}>
           <p className="text-lg font-medium text-gray-900">{resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY/MM/DD') : '-'}</p>
         </Field>
+        <Field label={t('resident.physicalIndependence')}>
+          <p className="text-lg font-medium text-gray-900">{resident.physicalIndependence || t('resident.independenceUnrated')}</p>
+        </Field>
+        <Field label={t('resident.dementiaIndependence')}>
+          <p className="text-lg font-medium text-gray-900">{resident.dementiaIndependence || t('resident.independenceUnrated')}</p>
+        </Field>
+        <Field label={t('resident.insuredNumber')}>
+          <p className="text-lg font-medium text-gray-900">{resident.insuredNumber || '-'}</p>
+        </Field>
+        <Field label={t('resident.insurer')}>
+          <p className="text-lg font-medium text-gray-900">{resident.insurer || '-'}</p>
+        </Field>
+        <Field label={t('resident.certPeriod')}>
+          <p className="text-lg font-medium text-gray-900">
+            {(resident.certValidFrom || resident.certValidTo)
+              ? `${resident.certValidFrom ? dayjs(resident.certValidFrom).format('YYYY/MM/DD') : ''} - ${resident.certValidTo ? dayjs(resident.certValidTo).format('YYYY/MM/DD') : ''}`
+              : '-'}
+          </p>
+        </Field>
       </div>
 
       <div className="mb-4">

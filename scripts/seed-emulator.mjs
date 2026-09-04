@@ -264,6 +264,24 @@ function buildImmunizations() {
   });
 }
 
+// 介護保険情報・日常生活自立度のサンプル。認定有効期間は入所日ごろ開始・24ヶ月間を想定。
+const INSURERS = ['中央市', '港区', '緑町', '北山市'];
+const PHYS_RANKS = ['J1', 'J2', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const DEM_RANKS = ['自立', 'I', 'IIa', 'IIb', 'IIIa', 'IIIb', 'IV'];
+function buildCareInsurance(admission) {
+  const from = new Date(admission);
+  const to = new Date(from);
+  to.setMonth(to.getMonth() + 24);
+  return {
+    physicalIndependence: pick(PHYS_RANKS),
+    dementiaIndependence: pick(DEM_RANKS),
+    insuredNumber: String(1000000000 + Math.floor(Math.random() * 8999999999)),
+    insurer: pick(INSURERS),
+    certValidFrom: Timestamp.fromDate(from),
+    certValidTo: Timestamp.fromDate(to),
+  };
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -285,6 +303,7 @@ function buildResident() {
     medicalHistory: pickN(histories, 1 + Math.floor(Math.random() * 3)).join('、'),
     ...buildAllergy(),
     careLevel: 1 + Math.floor(Math.random() * 5),
+    ...buildCareInsurance(admission),
     createdBy: SEED_AUTHOR,
     updatedBy: SEED_AUTHOR,
     deletedAt: null,

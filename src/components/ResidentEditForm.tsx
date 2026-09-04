@@ -14,6 +14,7 @@ import Snackbar from './common/Snackbar';
 import Button from './common/Button';
 import FormField from './common/FormField';
 import { TextInput, Select, Textarea } from './common/FormControls';
+import { PHYSICAL_INDEPENDENCE_RANKS, DEMENTIA_INDEPENDENCE_RANKS } from '../constants/independenceLevels';
 
 interface ResidentEditFormProps {
   resident: Resident;
@@ -35,6 +36,12 @@ const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFor
     allergyStatus: resident.allergyStatus,
     allergies: resident.allergies || '',
     careLevel: resident.careLevel,
+    physicalIndependence: resident.physicalIndependence || '',
+    dementiaIndependence: resident.dementiaIndependence || '',
+    insuredNumber: resident.insuredNumber || '',
+    insurer: resident.insurer || '',
+    certValidFrom: resident.certValidFrom ? dayjs(resident.certValidFrom).format('YYYY-MM-DD') : '',
+    certValidTo: resident.certValidTo ? dayjs(resident.certValidTo).format('YYYY-MM-DD') : '',
   });
 
   const [birthDateValue, setBirthDateValue] = useState<string>(dayjs(resident.birthDate).format('YYYY-MM-DD'));
@@ -169,6 +176,39 @@ const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFor
               </FormField>
               <FormField label={t('resident.dischargeDate')}>
                 <TextInput type="date" value={dischargeDateValue} onChange={handleDateChange('dischargeDate')} />
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label={t('resident.physicalIndependence')}>
+                <Select value={formData.physicalIndependence || ''} onChange={handleInputChange('physicalIndependence')}>
+                  <option value="">{t('resident.independenceUnrated')}</option>
+                  {PHYSICAL_INDEPENDENCE_RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </Select>
+              </FormField>
+              <FormField label={t('resident.dementiaIndependence')}>
+                <Select value={formData.dementiaIndependence || ''} onChange={handleInputChange('dementiaIndependence')}>
+                  <option value="">{t('resident.independenceUnrated')}</option>
+                  {DEMENTIA_INDEPENDENCE_RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </Select>
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label={t('resident.insuredNumber')}>
+                <TextInput value={formData.insuredNumber || ''} onChange={handleInputChange('insuredNumber')} />
+              </FormField>
+              <FormField label={t('resident.insurer')}>
+                <TextInput value={formData.insurer || ''} onChange={handleInputChange('insurer')} />
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label={t('resident.certValidFrom')}>
+                <TextInput type="date" value={formData.certValidFrom || ''} onChange={handleInputChange('certValidFrom')} />
+              </FormField>
+              <FormField label={t('resident.certValidTo')}>
+                <TextInput type="date" value={formData.certValidTo || ''} onChange={handleInputChange('certValidTo')} />
               </FormField>
             </div>
 
