@@ -124,7 +124,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
         <div className="p-6 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="名前" required>
+              <FormField label="氏名" required>
                 <TextInput value={formData.name} required onChange={handleInputChange('name')} />
               </FormField>
               <FormField label="フリガナ" required>
@@ -149,15 +149,6 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
               <FormField label="部屋番号" required>
                 <TextInput value={formData.roomNumber} required onChange={handleInputChange('roomNumber')} />
               </FormField>
-              <FormField label="入所日" required>
-                <TextInput type="date" value={admissionDateValue} required onChange={handleDateChange('admissionDate')} />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="退所日">
-                <TextInput type="date" value={dischargeDateValue} onChange={handleDateChange('dischargeDate')} />
-              </FormField>
               <FormField label="要介護度" required>
                 <Select value={formData.careLevel || 1} required onChange={handleInputChange('careLevel')}>
                   <option value={1}>要介護1</option>
@@ -166,6 +157,15 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
                   <option value={4}>要介護4</option>
                   <option value={5}>要介護5</option>
                 </Select>
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="入所日" required>
+                <TextInput type="date" value={admissionDateValue} required onChange={handleDateChange('admissionDate')} />
+              </FormField>
+              <FormField label="退所日（任意）">
+                <TextInput type="date" value={dischargeDateValue} onChange={handleDateChange('dischargeDate')} />
               </FormField>
             </div>
 
@@ -185,7 +185,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel }: ResidentEditFormPr
               </FormField>
             )}
 
-            <FormField label="既往歴">
+            <FormField label="既往歴・医療情報">
               <Textarea value={formData.medicalHistory} rows={4} placeholder="既往歴や医療情報を入力してください" onChange={handleInputChange('medicalHistory')} />
             </FormField>
 
