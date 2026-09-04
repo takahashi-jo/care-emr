@@ -144,6 +144,44 @@ function buildVitals() {
   return out;
 }
 
+// 病名マスターのサンプル（老健で頻用。本番は MEDIS 標準病名マスターを取り込む想定）
+const DISEASE_MASTER = [
+  { name: '高血圧症', icd10: 'I10' }, { name: '2型糖尿病', icd10: 'E11' }, { name: '脂質異常症', icd10: 'E78.5' },
+  { name: 'アルツハイマー型認知症', icd10: 'G30' }, { name: '血管性認知症', icd10: 'F01' }, { name: '認知症', icd10: 'F03' },
+  { name: '脳梗塞', icd10: 'I63' }, { name: '脳梗塞後遺症', icd10: 'I69.3' }, { name: '心房細動', icd10: 'I48' },
+  { name: '慢性心不全', icd10: 'I50.0' }, { name: '狭心症', icd10: 'I20' }, { name: '骨粗鬆症', icd10: 'M81' },
+  { name: '変形性膝関節症', icd10: 'M17' }, { name: '変形性腰椎症', icd10: 'M47' }, { name: '誤嚥性肺炎', icd10: 'J69.0' },
+  { name: '慢性閉塞性肺疾患', icd10: 'J44' }, { name: '気管支喘息', icd10: 'J45' }, { name: '逆流性食道炎', icd10: 'K21.0' },
+  { name: '便秘症', icd10: 'K59.0' }, { name: '慢性腎臓病', icd10: 'N18' }, { name: '前立腺肥大症', icd10: 'N40' },
+  { name: '過活動膀胱', icd10: 'N32.8' }, { name: '尿路感染症', icd10: 'N39.0' }, { name: '白内障', icd10: 'H25' },
+  { name: '甲状腺機能低下症', icd10: 'E03.9' }, { name: 'パーキンソン病', icd10: 'G20' }, { name: 'うつ病', icd10: 'F32' },
+  { name: '不眠症', icd10: 'G47.0' }, { name: '鉄欠乏性貧血', icd10: 'D50' }, { name: '褥瘡', icd10: 'L89' },
+  { name: '関節リウマチ', icd10: 'M06' }, { name: '胃潰瘍', icd10: 'K25' }, { name: '嚥下障害', icd10: 'R13' },
+];
+
+function buildProblems() {
+  const chosen = pickN(DISEASE_MASTER, 2 + Math.floor(Math.random() * 3)); // 2〜4件
+  return chosen.map((d, idx) => {
+    const onset = new Date(2018 + Math.floor(Math.random() * 6), Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 27));
+    const resolved = Math.random() < 0.2; // 一部は消失にして変遷を表現
+    const resolvedDate = resolved ? new Date(onset.getTime() + (200 + Math.floor(Math.random() * 400)) * 24 * 3600 * 1000) : null;
+    return {
+      number: idx + 1,
+      title: d.name,
+      icd10: d.icd10 || null,
+      status: resolved ? '消失' : '現行',
+      onsetDate: Timestamp.fromDate(onset),
+      resolvedDate: resolvedDate ? Timestamp.fromDate(resolvedDate) : null,
+      notes: '',
+      createdBy: SEED_AUTHOR,
+      updatedBy: SEED_AUTHOR,
+      deletedAt: null,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+  });
+}
+
 function buildResident() {
   const si = Math.floor(Math.random() * surnames.length);
   const gender = Math.random() > 0.55 ? '女性' : '男性';
@@ -200,10 +238,17 @@ async function main() {
   }
   console.log(`✅ 医薬品マスター ${DRUG_MASTER_NAMES.length} 件を投入`);
 
+  // 病名マスターをシード（病名オートコンプリート用）
+  for (const d of DISEASE_MASTER) {
+    await db.collection('diseaseMaster').add({ name: d.name, kana: d.kana || null, icd10: d.icd10 || null, createdAt: Timestamp.now() });
+  }
+  console.log(`✅ 病名マスター ${DISEASE_MASTER.length} 件を投入`);
+
   const RESIDENT_COUNT = 15;
   let recordCount = 0;
   let medCount = 0;
   let vitalCount = 0;
+  let problemCount = 0;
   for (let i = 0; i < RESIDENT_COUNT; i++) {
     const resident = buildResident();
     const ref = await db.collection('residents').add(resident);
@@ -231,8 +276,13 @@ async function main() {
       await ref.collection('vitals').add(v);
       vitalCount++;
     }
+    // プロブレムを residents/{id}/problems サブコレクションに投入
+    for (const pr of buildProblems()) {
+      await ref.collection('problems').add(pr);
+      problemCount++;
+    }
   }
-  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件を投入`);
+  console.log(`✅ シード完了: 入所者 ${RESIDENT_COUNT} 名 / 診療録 ${recordCount} 件 / 投薬 ${medCount} 件 / バイタル ${vitalCount} 件 / プロブレム ${problemCount} 件を投入`);
   process.exit(0);
 }
 

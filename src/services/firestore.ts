@@ -17,14 +17,16 @@ import {
 import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { logger } from './logger';
-import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData } from '../types';
+import type { Resident, MedicalRecord, MedicalRecordRevision, RecordAuthor, Medication, DrugMasterItem, ResidentFormData, MedicalRecordFormData, MedicationFormData, AllergyStatus, VitalSign, VitalSignFormData, Problem, ProblemFormData, ProblemStatus, DiseaseMasterItem } from '../types';
 
 export const COLLECTIONS = {
   RESIDENTS: 'residents',
   MEDICAL_RECORDS: 'medicalRecords',
   MEDICATIONS: 'medications',
   VITALS: 'vitals',
+  PROBLEMS: 'problems',
   DRUG_MASTER: 'drugMaster',
+  DISEASE_MASTER: 'diseaseMaster',
   REVISIONS: 'revisions'
 } as const;
 
@@ -118,6 +120,31 @@ const convertDrugMasterData = (id: string, data: Record<string, unknown>): DrugM
   kana: data.kana ? String(data.kana) : undefined,
   yjCode: data.yjCode ? String(data.yjCode) : undefined,
   hotCode: data.hotCode ? String(data.hotCode) : undefined,
+});
+
+const convertProblemData = (residentId: string, id: string, data: Record<string, unknown>): Problem => ({
+  id,
+  residentId,
+  number: Number(data.number) || 0,
+  title: String(data.title || ''),
+  icd10: data.icd10 ? String(data.icd10) : undefined,
+  status: (data.status as ProblemStatus) || '現行',
+  onsetDate: data.onsetDate ? convertTimestampToDate(data.onsetDate) : undefined,
+  resolvedDate: data.resolvedDate ? convertTimestampToDate(data.resolvedDate) : undefined,
+  notes: data.notes ? String(data.notes) : undefined,
+  createdBy: (data.createdBy as RecordAuthor) || undefined,
+  updatedBy: (data.updatedBy as RecordAuthor) || undefined,
+  deletedAt: data.deletedAt ? convertTimestampToDate(data.deletedAt) : undefined,
+  deletedBy: (data.deletedBy as RecordAuthor) || undefined,
+  createdAt: convertTimestampToDate(data.createdAt),
+  updatedAt: convertTimestampToDate(data.updatedAt),
+});
+
+const convertDiseaseMasterData = (id: string, data: Record<string, unknown>): DiseaseMasterItem => ({
+  id,
+  name: String(data.name || ''),
+  kana: data.kana ? String(data.kana) : undefined,
+  icd10: data.icd10 ? String(data.icd10) : undefined,
 });
 
 const convertVitalSignData = (residentId: string, id: string, data: Record<string, unknown>): VitalSign => {
@@ -695,6 +722,93 @@ export const vitalSignService = {
   }
 };
 
+// プロブレムリストは入所者のサブコレクション residents/{residentId}/problems に保存
+export const problemService = {
+  async getByResidentId(residentId: string): Promise<Problem[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS));
+      return snap.docs
+        .map(d => convertProblemData(residentId, d.id, d.data()))
+        .filter(p => !p.deletedAt) // 論理削除は除外
+        // 現行を上に、各グループ内は番号順
+        .sort((a, b) => {
+          const aResolved = a.status === '消失' ? 1 : 0;
+          const bResolved = b.status === '消失' ? 1 : 0;
+          if (aResolved !== bResolved) return aResolved - bResolved;
+          return a.number - b.number;
+        });
+    } catch (error) {
+      logger.firestoreError('Failed to fetch problems', error as Error, { action: 'get_problems', residentId });
+      return [];
+    }
+  },
+
+  async create(residentId: string, data: ProblemFormData, author: RecordAuthor): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(
+      collection(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS),
+      {
+        number: Number(data.number) || 0,
+        title: data.title,
+        icd10: data.icd10 || null,
+        status: data.status,
+        onsetDate: data.onsetDate ? Timestamp.fromDate(new Date(data.onsetDate)) : null,
+        resolvedDate: data.status === '消失' && data.resolvedDate ? Timestamp.fromDate(new Date(data.resolvedDate)) : null,
+        notes: data.notes || '',
+        createdBy: author,
+        updatedBy: author,
+        deletedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+    );
+    return ref.id;
+  },
+
+  async update(residentId: string, problemId: string, data: ProblemFormData, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS, problemId),
+      {
+        number: Number(data.number) || 0,
+        title: data.title,
+        icd10: data.icd10 || null,
+        status: data.status,
+        onsetDate: data.onsetDate ? Timestamp.fromDate(new Date(data.onsetDate)) : null,
+        resolvedDate: data.status === '消失' && data.resolvedDate ? Timestamp.fromDate(new Date(data.resolvedDate)) : null,
+        notes: data.notes || '',
+        updatedBy: author,
+        updatedAt: Timestamp.now(),
+      }
+    );
+  },
+
+  // 消失にする（削除ではなく状態遷移で変遷を残す）
+  async resolve(residentId: string, problemId: string, resolvedDate: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS, problemId),
+      {
+        status: '消失',
+        resolvedDate: Timestamp.fromDate(new Date(resolvedDate)),
+        updatedBy: author,
+        updatedAt: Timestamp.now(),
+      }
+    );
+  },
+
+  // 論理削除（入力誤り等。真正性のため物理削除しない）
+  async delete(residentId: string, problemId: string, author: RecordAuthor): Promise<void> {
+    await updateDoc(
+      doc(db, COLLECTIONS.RESIDENTS, residentId, COLLECTIONS.PROBLEMS, problemId),
+      {
+        deletedAt: Timestamp.now(),
+        deletedBy: author,
+        updatedAt: Timestamp.now(),
+        updatedBy: author,
+      }
+    );
+  }
+};
+
 // 医薬品マスター（drugMaster コレクション）- 薬剤名のプレフィックス検索
 export const drugMasterService = {
   async search(prefix: string, max = 10): Promise<DrugMasterItem[]> {
@@ -712,6 +826,28 @@ export const drugMasterService = {
       return snap.docs.map(d => convertDrugMasterData(d.id, d.data()));
     } catch (error) {
       logger.firestoreError('Drug master search failed', error as Error, { action: 'drug_search' });
+      return [];
+    }
+  }
+};
+
+// 病名マスター（diseaseMaster コレクション）- 病名のプレフィックス検索
+export const diseaseMasterService = {
+  async search(prefix: string, max = 10): Promise<DiseaseMasterItem[]> {
+    const term = prefix.trim();
+    if (!term) return [];
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.DISEASE_MASTER),
+        where('name', '>=', term),
+        where('name', '<=', term + String.fromCharCode(0xf8ff)),
+        orderBy('name'),
+        limit(max)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => convertDiseaseMasterData(d.id, d.data()));
+    } catch (error) {
+      logger.firestoreError('Disease master search failed', error as Error, { action: 'disease_search' });
       return [];
     }
   }

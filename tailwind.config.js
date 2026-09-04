@@ -38,6 +38,10 @@ const mutedRose = { // バイタル導線のアクセント（落ち着いたロ
   50: '#fbf1f4', 100: '#f6dde4', 200: '#eec1cd', 300: '#e099ac', 400: '#cf6e88',
   500: '#bc4d6b', 600: '#a63b58', 700: '#8a3249', 800: '#732d3f', 900: '#602937',
 }
+const mutedIndigo = { // プロブレムリスト導線のアクセント（落ち着いた藍。青=詳細とは色相で区別）
+  50: '#f4f2fb', 100: '#e7e2f5', 200: '#cfc6ea', 300: '#ab9dd6', 400: '#8670bf',
+  500: '#6a51a6', 600: '#573f8c', 700: '#493473', 800: '#3e2f60', 900: '#372b51',
+}
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -59,6 +63,7 @@ export default {
         red: mutedRed,       // danger・エラー
         amber: mutedAmber,   // warning・未確認
         rose: mutedRose,     // バイタル導線アクセント
+        indigo: mutedIndigo, // プロブレムリスト導線アクセント
       },
       fontFamily: {
         'sans': ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],

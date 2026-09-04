@@ -149,3 +149,43 @@ export interface VitalSignFormData {
   bloodGlucose?: string;
   notes?: string;
 }
+
+// プロブレムリスト（POMR）— residents/{id}/problems サブコレクション。
+// 問題を番号付きで管理し、現行/消失で状態を持つ。真正性のため論理削除＋監査。
+export type ProblemStatus = '現行' | '消失';
+
+export interface Problem {
+  id: string;
+  residentId: string;
+  number: number;          // 問題番号（#1, #2 ...）。消失後も番号は保持
+  title: string;           // 問題名（病名。病名マスター由来 or 自由入力）
+  icd10?: string;          // ICD-10 コード（病名マスター由来）
+  status: ProblemStatus;
+  onsetDate?: Date;        // 発症・認知日
+  resolvedDate?: Date;     // 消失日（status が消失のとき）
+  notes?: string;
+  createdBy?: RecordAuthor;
+  updatedBy?: RecordAuthor;
+  deletedAt?: Date;
+  deletedBy?: RecordAuthor;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProblemFormData {
+  number: string;          // 入力は文字列
+  title: string;
+  icd10?: string;
+  status: ProblemStatus;
+  onsetDate?: string;      // 'YYYY-MM-DD'
+  resolvedDate?: string;
+  notes?: string;
+}
+
+// 病名マスター1件（diseaseMaster コレクション。MEDIS 標準病名マスター等由来）
+export interface DiseaseMasterItem {
+  id: string;
+  name: string;            // 病名（例: 高血圧症）
+  kana?: string;
+  icd10?: string;          // ICD-10 コード（例: I10）
+}

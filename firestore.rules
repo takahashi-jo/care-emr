@@ -40,5 +40,10 @@ service cloud.firestore {
     match /drugMaster/{docId} {
       allow read, write: if isAdmin();
     }
+
+    // 病名マスター
+    match /diseaseMaster/{docId} {
+      allow read, write: if isAdmin();
+    }
   }
 }
