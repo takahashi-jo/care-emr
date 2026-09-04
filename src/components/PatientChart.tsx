@@ -31,6 +31,12 @@ const Overview = ({ resident, onEdit, onDelete }: { resident: Resident; onEdit: 
       {children}
     </div>
   );
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="mb-6">
+      <h4 className="text-sm font-semibold text-gray-500 mb-3 pb-1 border-b border-gray-200">{title}</h4>
+      {children}
+    </div>
+  );
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -57,48 +63,54 @@ const Overview = ({ resident, onEdit, onDelete }: { resident: Resident; onEdit: 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Field label={t('resident.name')}><p className="text-lg font-medium text-gray-900">{resident.name}</p></Field>
-        <Field label={t('resident.furigana')}><p className="text-lg font-medium text-gray-900">{resident.furigana}</p></Field>
-        <Field label={t('resident.gender')}><p className="text-lg font-medium text-gray-900">{t(resident.gender === '男性' ? 'resident.male' : 'resident.female')}</p></Field>
-        <Field label={t('resident.birthDate')}>
-          <p className="text-lg font-medium text-gray-900">{t('roster.birthDateValue', { date: dayjs(resident.birthDate).format('YYYY/MM/DD'), age })}</p>
-        </Field>
-        <Field label={t('resident.room')}>
-          <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">{resident.roomNumber}</span>
-        </Field>
-        <Field label={t('resident.careLevel')}>
-          <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">{t('resident.careLevelOption', { n: resident.careLevel })}</span>
-        </Field>
-        <Field label={t('resident.admissionDate')}>
-          <p className="text-lg font-medium text-gray-900">{dayjs(resident.admissionDate).format('YYYY/MM/DD')}</p>
-        </Field>
-        <Field label={t('roster.dischargeDate')}>
-          <p className="text-lg font-medium text-gray-900">{resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY/MM/DD') : '-'}</p>
-        </Field>
-        <Field label={t('resident.physicalIndependence')}>
-          <p className="text-lg font-medium text-gray-900">{resident.physicalIndependence || t('resident.independenceUnrated')}</p>
-        </Field>
-        <Field label={t('resident.dementiaIndependence')}>
-          <p className="text-lg font-medium text-gray-900">{resident.dementiaIndependence || t('resident.independenceUnrated')}</p>
-        </Field>
-        <Field label={t('resident.insuredNumber')}>
-          <p className="text-lg font-medium text-gray-900">{resident.insuredNumber || '-'}</p>
-        </Field>
-        <Field label={t('resident.insurer')}>
-          <p className="text-lg font-medium text-gray-900">{resident.insurer || '-'}</p>
-        </Field>
-        <Field label={t('resident.certPeriod')}>
-          <p className="text-lg font-medium text-gray-900">
-            {(resident.certValidFrom || resident.certValidTo)
-              ? `${resident.certValidFrom ? dayjs(resident.certValidFrom).format('YYYY/MM/DD') : ''} - ${resident.certValidTo ? dayjs(resident.certValidTo).format('YYYY/MM/DD') : ''}`
-              : '-'}
-          </p>
-        </Field>
-      </div>
+      <Section title={t('resident.sectionBasic')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label={t('resident.name')}><p className="text-lg font-medium text-gray-900">{resident.name}</p></Field>
+          <Field label={t('resident.furigana')}><p className="text-lg font-medium text-gray-900">{resident.furigana}</p></Field>
+          <Field label={t('resident.gender')}><p className="text-lg font-medium text-gray-900">{t(resident.gender === '男性' ? 'resident.male' : 'resident.female')}</p></Field>
+          <Field label={t('resident.birthDate')}>
+            <p className="text-lg font-medium text-gray-900">{t('roster.birthDateValue', { date: dayjs(resident.birthDate).format('YYYY/MM/DD'), age })}</p>
+          </Field>
+          <Field label={t('resident.room')}>
+            <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-full">{resident.roomNumber}</span>
+          </Field>
+          <Field label={t('resident.careLevel')}>
+            <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">{t('resident.careLevelOption', { n: resident.careLevel })}</span>
+          </Field>
+          <Field label={t('resident.admissionDate')}>
+            <p className="text-lg font-medium text-gray-900">{dayjs(resident.admissionDate).format('YYYY/MM/DD')}</p>
+          </Field>
+          <Field label={t('roster.dischargeDate')}>
+            <p className="text-lg font-medium text-gray-900">{resident.dischargeDate ? dayjs(resident.dischargeDate).format('YYYY/MM/DD') : '-'}</p>
+          </Field>
+        </div>
+      </Section>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-500 mb-1">{t('resident.allergy')}</label>
+      <Section title={t('resident.sectionCareInsurance')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label={t('resident.physicalIndependence')}>
+            <p className="text-lg font-medium text-gray-900">{resident.physicalIndependence || t('resident.independenceUnrated')}</p>
+          </Field>
+          <Field label={t('resident.dementiaIndependence')}>
+            <p className="text-lg font-medium text-gray-900">{resident.dementiaIndependence || t('resident.independenceUnrated')}</p>
+          </Field>
+          <Field label={t('resident.insuredNumber')}>
+            <p className="text-lg font-medium text-gray-900">{resident.insuredNumber || '-'}</p>
+          </Field>
+          <Field label={t('resident.insurer')}>
+            <p className="text-lg font-medium text-gray-900">{resident.insurer || '-'}</p>
+          </Field>
+          <Field label={t('resident.certPeriod')}>
+            <p className="text-lg font-medium text-gray-900">
+              {(resident.certValidFrom || resident.certValidTo)
+                ? `${resident.certValidFrom ? dayjs(resident.certValidFrom).format('YYYY/MM/DD') : ''} - ${resident.certValidTo ? dayjs(resident.certValidTo).format('YYYY/MM/DD') : ''}`
+                : '-'}
+            </p>
+          </Field>
+        </div>
+      </Section>
+
+      <Section title={t('resident.allergy')}>
         {resident.allergyStatus === 'あり' ? (
           <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">{resident.allergies || t('resident.allergyPresent')}</span>
         ) : resident.allergyStatus === 'なし' ? (
@@ -106,15 +118,11 @@ const Overview = ({ resident, onEdit, onDelete }: { resident: Resident; onEdit: 
         ) : (
           <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-amber-100 text-amber-800 rounded-full">{t('resident.allergyUnknown')}</span>
         )}
-      </div>
+      </Section>
 
-      {resident.medicalHistory && (
-        <div>
-          <hr className="my-4 border-gray-200" />
-          <label className="block text-sm font-medium text-gray-500 mb-2">{t('resident.medicalHistory')}</label>
-          <p className="text-gray-700 whitespace-pre-wrap">{resident.medicalHistory}</p>
-        </div>
-      )}
+      <Section title={t('resident.medicalHistory')}>
+        <p className="text-gray-700 whitespace-pre-wrap">{resident.medicalHistory || '-'}</p>
+      </Section>
 
       <div className="mt-6 pt-3 border-t border-gray-100 text-xs text-gray-400">
         {t('common.createdBy', { name: resident.createdBy?.name ?? '-', date: dayjs(resident.createdAt).format('YYYY/MM/DD HH:mm') })}

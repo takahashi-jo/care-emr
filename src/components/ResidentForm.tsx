@@ -134,6 +134,7 @@ const ResidentForm = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.sectionBasic')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <FormField label={t('resident.name')} htmlFor="name" required help={t('resident.spaceNote')}>
                 <TextInput
@@ -202,6 +203,7 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.sectionCareInsurance')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <FormField label={t('resident.physicalIndependence')} htmlFor="physicalIndependence">
                 <Select id="physicalIndependence" value={formData.physicalIndependence || ''} onChange={handleInputChange('physicalIndependence')}>
@@ -235,27 +237,25 @@ const ResidentForm = () => {
               </FormField>
             </div>
 
-            <FormField label={t('resident.allergy')} required>
-              <div className="flex items-center gap-6 py-1">
-                <label className="flex items-center gap-1.5 text-sm text-gray-800">
-                  <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'なし'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'なし', allergies: '' }))} />
-                  {t('resident.allergyNone')}
-                </label>
-                <label className="flex items-center gap-1.5 text-sm text-gray-800">
-                  <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'あり'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'あり' }))} />
-                  {t('resident.allergyPresent')}
-                </label>
-              </div>
-            </FormField>
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.allergy')}</h3>
+            <div className="flex items-center gap-6 py-1">
+              <label className="flex items-center gap-1.5 text-sm text-gray-800">
+                <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'なし'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'なし', allergies: '' }))} />
+                {t('resident.allergyNone')}
+              </label>
+              <label className="flex items-center gap-1.5 text-sm text-gray-800">
+                <input type="radio" name="allergyStatus" checked={formData.allergyStatus === 'あり'} onChange={() => setFormData(prev => ({ ...prev, allergyStatus: 'あり' }))} />
+                {t('resident.allergyPresent')}
+              </label>
+            </div>
             {formData.allergyStatus === 'あり' && (
               <FormField label={t('resident.allergen')} required>
                 <TextInput value={formData.allergies || ''} placeholder={t('resident.phAllergen')} onChange={handleInputChange('allergies')} />
               </FormField>
             )}
 
-            <FormField label={t('resident.medicalHistory')} htmlFor="medicalHistory">
-              <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
-            </FormField>
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.medicalHistory')}</h3>
+            <Textarea id="medicalHistory" value={formData.medicalHistory} rows={3} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
 
             <div className="flex flex-wrap gap-3 justify-end">
               <Button type="button" variant="secondary" icon={ArrowPathIcon} onClick={resetForm} disabled={loading}>

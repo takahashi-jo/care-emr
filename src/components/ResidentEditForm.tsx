@@ -134,6 +134,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFor
 
         <div className="p-6 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.sectionBasic')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={t('resident.name')} required>
                 <TextInput value={formData.name} required onChange={handleInputChange('name')} />
@@ -179,6 +180,7 @@ const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFor
               </FormField>
             </div>
 
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.sectionCareInsurance')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={t('resident.physicalIndependence')}>
                 <Select value={formData.physicalIndependence || ''} onChange={handleInputChange('physicalIndependence')}>
@@ -212,25 +214,23 @@ const ResidentEditForm = ({ resident, onComplete, onCancel, z }: ResidentEditFor
               </FormField>
             </div>
 
-            <FormField label={t('resident.allergy')} required>
-              <Select
-                value={formData.allergyStatus || '未確認'}
-                onChange={(e) => setFormData(prev => ({ ...prev, allergyStatus: e.target.value as AllergyStatus, allergies: e.target.value === 'あり' ? prev.allergies : '' }))}
-              >
-                <option value="未確認">{t('resident.allergyUnknown')}</option>
-                <option value="なし">{t('resident.allergyNone')}</option>
-                <option value="あり">{t('resident.allergyPresent')}</option>
-              </Select>
-            </FormField>
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.allergy')}</h3>
+            <Select
+              value={formData.allergyStatus || '未確認'}
+              onChange={(e) => setFormData(prev => ({ ...prev, allergyStatus: e.target.value as AllergyStatus, allergies: e.target.value === 'あり' ? prev.allergies : '' }))}
+            >
+              <option value="未確認">{t('resident.allergyUnknown')}</option>
+              <option value="なし">{t('resident.allergyNone')}</option>
+              <option value="あり">{t('resident.allergyPresent')}</option>
+            </Select>
             {formData.allergyStatus === 'あり' && (
               <FormField label={t('resident.allergen')} required error={(formData.allergies || '').trim() === '' ? t('resident.allergenRequired') : undefined}>
                 <TextInput value={formData.allergies || ''} required error={(formData.allergies || '').trim() === ''} placeholder={t('resident.phAllergen')} onChange={handleInputChange('allergies')} />
               </FormField>
             )}
 
-            <FormField label={t('resident.medicalHistory')}>
-              <Textarea value={formData.medicalHistory} rows={4} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
-            </FormField>
+            <h3 className="text-sm font-semibold text-gray-500 pb-1 border-b border-gray-200">{t('resident.medicalHistory')}</h3>
+            <Textarea value={formData.medicalHistory} rows={4} placeholder={t('resident.phHistory')} onChange={handleInputChange('medicalHistory')} />
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <Button type="button" variant="secondary" icon={XMarkIcon} onClick={onCancel} disabled={loading}>

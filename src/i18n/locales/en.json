@@ -52,6 +52,8 @@
     "room": "Room number",
     "careLevel": "Care level",
     "careLevelOption": "Care level {{n}}",
+    "sectionBasic": "Basic info",
+    "sectionCareInsurance": "Care insurance & independence",
     "physicalIndependence": "Physical ADL independence",
     "dementiaIndependence": "Dementia daily-living independence",
     "independenceUnrated": "Not rated",

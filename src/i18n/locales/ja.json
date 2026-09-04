@@ -52,6 +52,8 @@
     "room": "部屋番号",
     "careLevel": "要介護度",
     "careLevelOption": "要介護{{n}}",
+    "sectionBasic": "基本情報",
+    "sectionCareInsurance": "介護保険・自立度",
     "physicalIndependence": "障害高齢者の日常生活自立度",
     "dementiaIndependence": "認知症高齢者の日常生活自立度",
     "independenceUnrated": "未評価",
